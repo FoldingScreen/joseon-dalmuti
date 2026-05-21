@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>달무티</title>
+  <link rel="stylesheet" href="./dalmuti.css?v=20260516-3" />
+</head>
+<body>
+  <div class="dalmuti-app">
+    <header class="dalmuti-topbar">
+      <div>
+        <div class="eyebrow">DALMUTI</div>
+        <h1>달무티</h1>
+      </div>
+      <div class="top-actions">
+        <button id="leaveRoomBtn" class="btn ghost hidden" type="button">방 나가기</button>
+      </div>
+    </header>
+
+    <main id="lobbyView" class="view show">
+      <section class="panel hero-panel">
+        <div>
+          <h2>조선풍 계급 카드게임</h2>
+          <p>같은 계급 카드를 여러 장 내고, 더 높은 계급으로 받아칩니다. 라운드 순위에 따라 다음 계급과 승점이 정해집니다.</p>
+        </div>
+        <div class="profile-box">
+          <span>접속 닉네임</span>
+          <strong id="myNickname">-</strong>
+        </div>
+      </section>
+
+      <section class="lobby-grid">
+        <div class="panel">
+          <h3>방 만들기</h3>
+          <label class="field-label" for="roomTitleInput">방 이름</label>
+          <input id="roomTitleInput" class="input" type="text" maxlength="24" placeholder="예: 달무티 한 판" />
+          <div class="setting-row">
+            <label>라운드</label>
+            <select id="totalRoundsSelect" class="input">
+              <option value="3">3판</option>
+              <option value="5" selected>5판</option>
+              <option value="10">10판</option>
+              <option value="0">무제한</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>턴 제한</label>
+            <select id="turnLimitSelect" class="input">
+              <option value="15" selected>없음</option>
+              <option value="30">없음</option>
+            </select>
+          </div>
+          <button id="createRoomBtn" class="btn primary" type="button">방 만들기</button>
+        </div>
+
+        <div class="panel">
+          <h3>카드 서열</h3>
+          <p class="muted">강함 → 약함</p>
+          <div id="rankPreview" class="rank-preview"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-head">
+          <h3>대기방 목록</h3>
+          <button id="refreshRoomsBtn" class="btn ghost small" type="button">새로고침</button>
+        </div>
+        <div id="roomList" class="room-list"></div>
+      </section>
+    </main>
+
+    <main id="roomView" class="view">
+      <section class="room-shell">
+        <div class="panel game-panel">
+          <div class="room-head">
+            <div>
+              <div id="roomStateText" class="eyebrow">대기 중</div>
+              <h2 id="roomTitle">-</h2>
+            </div>
+            <div id="turnBadge" class="turn-badge">-</div>
+          </div>
+
+          <div id="messageBar" class="message-bar">방 정보를 불러오는 중입니다.</div>
+
+          <div id="lobbyControls" class="lobby-controls hidden">
+            <button id="readyBtn" class="btn primary" type="button">준비</button>
+            <button id="watchBtn" class="btn ghost" type="button">관전하기</button>
+            <button id="joinAsPlayerBtn" class="btn primary hidden" type="button">참가하기</button>
+            <button id="startBtn" class="btn ghost" type="button">게임 시작</button>
+          </div>
+
+          <div id="betweenControls" class="lobby-controls hidden">
+            <button id="nextRoundBtn" class="btn primary" type="button">다음 라운드 시작</button>
+            <button id="resetGameBtn" class="btn danger" type="button">새 게임으로 초기화</button>
+          </div>
+
+          <div class="table-wrap">
+            <div id="playersArea" class="players-area"></div>
+            <div id="centerPile" class="center-pile"></div>
+          </div>
+
+          <div class="hand-header">
+            <div>
+              <h3>내 손패</h3>
+              <p id="handHelp" class="muted">손패는 계급별 스택으로 표시됩니다.</p>
+            </div>
+            <div id="selectedSummary" class="selected-summary">선택 없음</div>
+          </div>
+
+          <div id="handArea" class="hand-area"></div>
+
+          <div id="playControls" class="action-row hidden">
+            <button id="playBtn" class="btn primary" type="button">선택 카드 내기</button>
+            <button id="passBtn" class="btn ghost" type="button">패스</button>
+          </div>
+        </div>
+
+        <aside class="panel side-panel">
+          <section>
+            <h3>승점표</h3>
+            <div id="scoreList" class="score-list"></div>
+          </section>
+          <section>
+            <div class="section-head">
+              <h3>채팅</h3>
+              <button id="toggleSpectatorChatBtn" class="btn ghost small" type="button">관전자 채팅</button>
+            </div>
+            <div id="chatList" class="chat-list"></div>
+            <div class="chat-input-row">
+              <input id="chatInput" class="input" type="text" maxlength="120" placeholder="메시지 입력" />
+              <button id="sendChatBtn" class="btn primary small" type="button">전송</button>
+            </div>
+          </section>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    (function () {
+      var loginName = String(localStorage.getItem("partyAppUser") || "").trim();
+      if (loginName) return;
+
+      var savedGuestName = String(localStorage.getItem("dalmutiGuestNickname") || "").trim();
+      var guestName = window.prompt("닉네임을 입력하세요", savedGuestName || "");
+      guestName = String(guestName || "").trim().slice(0, 12);
+
+      if (!guestName) {
+        guestName = "손님" + Math.floor(1000 + Math.random() * 9000);
+      }
+
+      localStorage.setItem("dalmutiGuestNickname", guestName);
+      localStorage.setItem("partyAppUser", guestName);
+      localStorage.setItem("dalmutiGuestMode", "true");
+    })();
+  </script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyD1J81VQ_Ia4rlzuDmSDGKABVX9PjKQlzc",
+      authDomain: "dalmuti-330da.firebaseapp.com",
+      projectId: "dalmuti-330da",
+      storageBucket: "dalmuti-330da.firebasestorage.app",
+      messagingSenderId: "496505416002",
+      appId: "1:496505416002:web:64c5dc54545af0dccd80db",
+      measurementId: "G-EV2SN61VJZ"
+    });
+  </script>
+  <script src="./js/00-config.js?v=20260520-office-manage1"></script>
+  <script src="./js/95-detach-branding.js?v=20260518-detach1"></script>
+  <script src="./js/93-chat-ui.js?v=20260518-chatui1"></script>
+  <script src="./js/92-presence-messages.js?v=20260518-presence1"></script>
+  <script src="./js/89-ready-border.js?v=20260518-ready1"></script>
+  <script src="./js/88-pass-count-fix.js?v=20260518-passcount1"></script>
+  <script src="./js/83-nickname-change.js?v=20260518-nick1"></script>
+  <script src="./js/97-sfx.js?v=20260517-sfx2"></script>
+  <script src="./js/96-shared-action-sfx.js?v=20260517-sharedaction1"></script>
+  <script src="./js/98-hard-remove.js?v=20260517-hardremove1"></script>
+  <script src="./js/99-waiting-spectator-passfix.js?v=20260517-watchpass1"></script>
+</body>
+</html>
