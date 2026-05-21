@@ -1,0 +1,2425 @@
+/* =========================
+         PC 게임 화면 압축 레이아웃
+      ========================= */
+      @media(min-width:881px){
+        .dalmuti-app{
+          width:min(1380px,100%);
+          padding:10px 14px;
+        }
+
+        .dalmuti-topbar{
+          margin-bottom:8px;
+        }
+
+        .dalmuti-topbar h1{
+          font-size:23px;
+          margin:0;
+        }
+
+        .eyebrow{
+          font-size:10px;
+        }
+
+        .room-shell{
+          grid-template-columns:minmax(0,1fr) 300px!important;
+          gap:10px;
+          align-items:start;
+        }
+
+        .panel{
+          padding:12px;
+          border-radius:18px;
+        }
+
+        .game-panel{
+          min-height:calc(100vh - 78px)!important;
+          display:flex;
+          flex-direction:column;
+        }
+
+        .room-head{
+          display:none!important;
+        }
+
+        .message-bar{
+          margin:0 0 8px;
+          padding:8px 10px;
+          font-size:13px;
+        }
+
+        .table-wrap{
+          height:calc(100vh - 300px)!important;
+          min-height:540px!important;
+          max-height:620px!important;
+          margin-top:6px;
+          flex:1;
+        }
+
+        .hand-header{
+          margin-top:8px;
+        }
+
+        .hand-header h3{
+          font-size:17px;
+          margin:0;
+        }
+
+        .hand-header .muted{
+          display:none;
+        }
+
+        .hand-area{
+          min-height:142px!important;
+          padding:10px;
+          margin:6px 0;
+          gap:8px;
+        }
+
+        .hand-stack{
+          width:74px!important;
+        }
+
+        .hand-stack img{
+          width:74px!important;
+          border-radius:8px;
+        }
+
+        .selected-summary{
+          font-size:13px;
+          padding:6px 10px;
+        }
+
+        .action-row .btn{
+          padding:8px 11px;
+        }
+
+        .player-box{
+          width:116px;
+          min-height:68px;
+          padding:7px;
+          border-radius:14px;
+          position:absolute;
+        }
+
+        .player-role{
+          font-size:11px;
+        }
+
+        .player-name{
+          font-size:13px;
+        }
+
+        .player-meta{
+          font-size:11px;
+        }
+
+        .seat-bottom{
+          bottom:6px!important;
+        }
+
+        .seat-top-0,
+        .seat-top-1,
+        .seat-top-2{
+          top:6px!important;
+        }
+
+        .seat-left-0,
+        .seat-left-1,
+        .seat-left-2{
+          left:8px!important;
+        }
+
+        .seat-right-0,
+        .seat-right-1,
+        .seat-right-2{
+          right:8px!important;
+        }
+
+        .seat-top-0{
+          left:50%!important;
+          transform:translateX(-50%)!important;
+        }
+
+        .seat-top-1{
+          left:30%!important;
+          transform:translateX(-50%)!important;
+        }
+
+        .seat-top-2{
+          left:70%!important;
+          transform:translateX(-50%)!important;
+        }
+
+        .center-pile{
+          width:720px!important;
+          max-width:72%!important;
+          height:360px!important;
+          min-height:360px!important;
+          padding:0!important;
+          overflow:visible!important;
+          text-align:left!important;
+        }
+
+        .side-panel{
+          gap:9px;
+          max-height:calc(100vh - 92px);
+          overflow:auto;
+        }
+
+        .side-panel>section:first-child{
+          display:none;
+        }
+
+        .chat-list{
+          height:200px;
+        }
+      }
+
+      /* =========================
+         플레이어 상태 뱃지
+      ========================= */
+      .player-box.submitted{
+        border-color:#7ee2a8!important;
+        box-shadow:0 0 0 2px rgba(126,226,168,.55),0 12px 24px rgba(0,0,0,.28)!important;
+      }
+
+      .player-box.passed{
+        opacity:.8!important;
+        border-color:#8792a7!important;
+        background:rgba(35,39,51,.92)!important;
+      }
+
+      .badge{
+        display:inline-block;
+        margin-top:3px;
+        padding:2px 7px;
+        border-radius:999px;
+        font-size:10px;
+        font-weight:900;
+      }
+
+      .badge.submit{
+        background:rgba(126,226,168,.16);
+        border:1px solid rgba(126,226,168,.75);
+        color:#9ff0bd;
+      }
+
+      .badge.pass{
+        background:rgba(135,146,167,.16);
+        border:1px solid rgba(135,146,167,.75);
+        color:#d2d8e4;
+      }
+
+      .badge.turn{
+        background:rgba(243,210,129,.16);
+        border:1px solid rgba(243,210,129,.75);
+        color:#f3d281;
+      }
+
+      .badge.ai{
+        background:rgba(111,179,255,.16);
+        border:1px solid rgba(111,179,255,.75);
+        color:#9fcaff;
+      }
+
+      .kick-btn{
+        position:absolute;
+        right:5px;
+        top:5px;
+        border:0;
+        border-radius:999px;
+        background:rgba(215,101,101,.92);
+        color:#fff;
+        font-size:10px;
+        font-weight:900;
+        padding:3px 6px;
+        cursor:pointer;
+        z-index:3;
+      }
+
+      .score-list{
+        display:none!important;
+      }
+
+      /* =========================
+         로비 화면
+      ========================= */
+      .legacy-lobby-hidden{
+        display:none!important;
+      }
+
+      .lobby-grid{
+        display:grid;
+        grid-template-columns:360px minmax(0,1fr);
+        gap:14px;
+        align-items:start;
+        margin-top:14px;
+      }
+
+      .lobby-left,
+      .lobby-right{
+        min-width:0;
+      }
+
+      .lobby-section-head{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        margin-bottom:10px;
+      }
+
+      .lobby-panel-title{
+        font-size:20px;
+        font-weight:900;
+        color:#f4f1e8;
+        margin:0;
+      }
+
+      .lobby-toolbar{
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+      }
+
+      .room-item{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:10px;
+        border:1px solid rgba(255,255,255,.1);
+        background:rgba(255,255,255,.045);
+        border-radius:14px;
+        padding:10px;
+        margin-top:8px;
+      }
+
+      .room-item .btn{
+        padding:7px 10px;
+        font-size:12px;
+        white-space:nowrap;
+      }
+
+      .room-item strong{
+        font-size:15px;
+        color:#f4f1e8;
+      }
+
+      .room-meta{
+        margin-top:4px;
+        font-size:12px;
+        color:#aeb5c3;
+      }
+
+      /* =========================
+         로비 룰 설명
+      ========================= */
+      .rule-card{
+        border:0;
+        background:transparent;
+        padding:0;
+      }
+
+      .rule-title{
+        font-size:20px;
+        font-weight:900;
+        color:#f3d281;
+        margin:0 0 12px;
+      }
+
+      .rule-two-col{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+      }
+
+      .rule-block{
+        min-height:92px;
+        border:1px solid rgba(255,255,255,.09);
+        background:rgba(255,255,255,.045);
+        border-radius:14px;
+        padding:11px;
+        font-size:12px;
+        line-height:1.55;
+        color:#d8deea;
+      }
+
+      .rule-block strong{
+        display:block;
+        color:#f3d281;
+        margin-bottom:5px;
+        font-size:13px;
+      }
+
+      .rank-card-grid{
+        display:grid;
+        grid-template-columns:repeat(6,1fr);
+        gap:8px;
+        margin-top:10px;
+      }
+
+      .rank-card-mini{
+        border:1px solid rgba(255,255,255,.1);
+        background:rgba(0,0,0,.22);
+        border-radius:12px;
+        padding:6px;
+        text-align:center;
+      }
+
+      .rank-card-mini img{
+        width:100%;
+        aspect-ratio:2/3;
+        object-fit:cover;
+        border-radius:8px;
+        display:block;
+        margin-bottom:5px;
+      }
+
+      .rank-card-mini strong{
+        display:block;
+        font-size:10.5px;
+        color:#f4f1e8;
+        line-height:1.15;
+      }
+
+      .rank-card-mini span{
+        display:block;
+        font-size:10px;
+        color:#aeb5c3;
+        margin-top:2px;
+      }
+
+      /* =========================
+         방 만들기 모달
+      ========================= */
+      .create-room-modal{
+        position:fixed;
+        inset:0;
+        z-index:190;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        background:rgba(0,0,0,.62);
+        padding:22px;
+      }
+
+      .create-room-modal.show{
+        display:flex;
+      }
+
+      .create-room-card{
+        width:min(420px,94vw);
+        background:#121827;
+        border:1px solid rgba(243,210,129,.4);
+        border-radius:22px;
+        padding:18px;
+        color:#f4f1e8;
+        box-shadow:0 24px 80px rgba(0,0,0,.55);
+      }
+
+      .create-room-card h2{
+        margin:0 0 12px;
+        color:#f3d281;
+      }
+
+      .create-room-card .input{
+        width:100%;
+        margin-bottom:8px;
+      }
+
+      .create-room-actions{
+        display:flex;
+        justify-content:flex-end;
+        gap:8px;
+        margin-top:12px;
+      }
+
+      /* =========================
+         중앙 카드 제출 영역
+      ========================= */
+      .pile-board{
+        position:relative;
+        width:100%;
+        height:100%;
+      }
+
+      .pile-empty{
+        height:100%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#aeb5c3;
+        font-weight:900;
+        font-size:18px;
+      }
+
+      .prev-pile{
+        position:absolute;
+        left:14px;
+        top:14px;
+        width:160px;
+        min-height:158px;
+        border:1px solid rgba(255,255,255,.09);
+        border-radius:14px;
+        background:rgba(0,0,0,.24);
+        padding:10px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+      }
+
+      .prev-pile-title{
+        font-size:12px;
+        font-weight:900;
+        color:#aeb5c3;
+        margin-bottom:8px;
+      }
+
+      .prev-pile img{
+        width:82px;
+        border-radius:10px;
+      }
+
+      .cur-pile{
+        position:absolute;
+        left:205px;
+        right:18px;
+        top:20px;
+        bottom:18px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+      }
+
+      .cur-pile-title{
+        font-size:14px;
+        font-weight:900;
+        color:#f3d281;
+        margin-bottom:12px;
+      }
+
+      .cur-cards{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+
+      .cur-cards img{
+        width:132px;
+        object-fit:cover;
+        border-radius:12px;
+        box-shadow:0 12px 28px rgba(0,0,0,.42);
+        margin-left:-38px;
+      }
+
+      .cur-cards img:first-child{
+        margin-left:0;
+      }
+
+      /* =========================
+         우측 사이드 박스
+      ========================= */
+      .side-box{
+        margin-top:8px;
+        border:1px solid rgba(243,210,129,.28);
+        background:rgba(13,19,32,.72);
+        border-radius:16px;
+        padding:10px;
+      }
+
+      .side-title,
+      .result-title{
+        font-weight:900;
+        color:#f3d281;
+        margin-bottom:7px;
+      }
+
+      .side-btns{
+        display:flex;
+        gap:6px;
+        flex-wrap:wrap;
+      }
+
+      .side-btns .btn{
+        padding:6px 8px;
+        font-size:12px;
+      }
+
+      .chip{
+        display:inline-block;
+        font-size:11px;
+        padding:4px 7px;
+        border-radius:999px;
+        border:1px solid rgba(174,181,195,.28);
+        background:rgba(255,255,255,.045);
+        margin:2px;
+      }
+
+      .score-row.compact{
+        font-size:12px;
+        padding:4px 0;
+      }
+
+      .room-setting-grid{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:6px;
+      }
+
+      .room-setting-grid .input{
+        height:32px;
+        font-size:12px;
+      }
+
+      .result-row{
+        display:grid;
+        grid-template-columns:40px minmax(0,1fr) 48px 62px;
+        gap:6px;
+        padding:6px 7px;
+        border-radius:12px;
+        background:rgba(255,255,255,.045);
+        font-size:12px;
+        margin-top:5px;
+      }
+
+      .result-row.header{
+        background:transparent;
+        color:#aeb5c3;
+        font-weight:900;
+      }
+
+      /* =========================
+         공용 모달
+      ========================= */
+      .game-modal{
+        position:fixed;
+        inset:0;
+        z-index:180;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        background:rgba(0,0,0,.62);
+        padding:24px;
+      }
+
+      .game-modal.show{
+        display:flex;
+      }
+
+      .modal-card{
+        width:min(760px,96vw);
+        max-height:86vh;
+        overflow:auto;
+        background:#121827;
+        border:1px solid rgba(243,210,129,.4);
+        border-radius:24px;
+        padding:22px;
+        box-shadow:0 24px 80px rgba(0,0,0,.58);
+        color:#f4f1e8;
+      }
+
+      .modal-head h2{
+        margin:0;
+        color:#f3d281;
+      }
+
+      .modal-table{
+        display:grid;
+        gap:7px;
+      }
+
+      .modal-row{
+        display:grid;
+        grid-template-columns:54px minmax(0,1fr) 74px 82px;
+        gap:8px;
+        align-items:center;
+        padding:9px;
+        border-radius:13px;
+        background:rgba(255,255,255,.055);
+        font-size:14px;
+      }
+
+      .modal-row.header{
+        background:transparent;
+        color:#aeb5c3;
+        font-size:12px;
+        font-weight:900;
+      }
+
+      .modal-actions{
+        display:flex;
+        justify-content:flex-end;
+        gap:8px;
+        margin-top:16px;
+      }
+
+      .rebellion-card{
+        text-align:center;
+      }
+
+      .rebellion-card img{
+        width:180px;
+        border-radius:18px;
+        box-shadow:0 18px 55px rgba(0,0,0,.6);
+        margin-bottom:16px;
+      }
+
+      .rebellion-card h2{
+        color:#f3d281;
+        margin:4px 0 8px;
+      }
+
+      .rebellion-card p{
+        font-size:18px;
+        font-weight:900;
+        margin:6px 0;
+      }
+
+      .help-section{
+        border-top:1px solid rgba(255,255,255,.09);
+        padding-top:12px;
+        margin-top:12px;
+        line-height:1.55;
+        color:#d8deea;
+        font-size:14px;
+      }
+
+      .help-section strong{
+        color:#f3d281;
+      }
+
+      /* =========================
+         상납 패널 / 카드 이동
+      ========================= */
+      /* =========================
+         상납 패널 / 카드 이동
+      ========================= */
+      #tributePanel{
+        position:fixed;
+        right:max(20px, calc((100vw - 1380px) / 2 + 410px));
+        bottom:26px;
+        z-index:95;
+        display:none;
+        width:340px;
+        max-width:calc(100vw - 440px);
+        padding:16px;
+        border-radius:22px;
+        border:1px solid rgba(243,210,129,.48);
+        background:rgba(13,19,32,.97);
+        box-shadow:0 20px 58px rgba(0,0,0,.52);
+        color:#f4f1e8;
+      }
+
+      .tribute-title{
+        font-weight:900;
+        color:#f3d281;
+        font-size:15px;
+      }
+
+      .tribute-line{
+        font-size:13px;
+        color:#aeb5c3;
+        margin:8px 0;
+        line-height:1.45;
+      }
+
+      .tribute-cards{
+        display:flex;
+        gap:9px;
+        flex-wrap:wrap;
+      }
+
+      .tribute-cards img{
+        width:58px;
+        border-radius:9px;
+        box-shadow:0 8px 18px rgba(0,0,0,.35);
+      }
+
+      .tribute-fly-card{
+        position:fixed;
+        width:54px;
+        height:81px;
+        object-fit:cover;
+        border-radius:8px;
+        z-index:220;
+        pointer-events:none;
+        box-shadow:0 12px 28px rgba(0,0,0,.48);
+        transition:transform 3000ms cubic-bezier(.2,.85,.18,1),opacity 3000ms ease;
+      }
+
+      /* =========================
+         채팅 이모티콘
+      ========================= */
+      .emoji-wrap{
+        position:relative;
+        display:inline-flex;
+      }
+
+      .emoji-panel{
+        position:absolute;
+        right:0;
+        bottom:38px;
+        z-index:120;
+        display:none;
+        width:220px;
+        padding:10px;
+        border-radius:16px;
+        border:1px solid rgba(243,210,129,.35);
+        background:rgba(13,19,32,.98);
+        box-shadow:0 16px 42px rgba(0,0,0,.45);
+        grid-template-columns:repeat(6,1fr);
+        gap:6px;
+      }
+
+      .emoji-panel.show{
+        display:grid;
+      }
+
+      .emoji-btn{
+        width:30px;
+        height:30px;
+        border:1px solid rgba(255,255,255,.1);
+        border-radius:10px;
+        background:rgba(255,255,255,.06);
+        cursor:pointer;
+        font-size:18px;
+        line-height:1;
+      }
+
+      .emoji-btn:hover{
+        background:rgba(243,210,129,.14);
+        border-color:rgba(243,210,129,.45);
+      }
+
+      .chat-emoji-big{
+        display:block;
+        font-size:5em;
+        line-height:1.05;
+        margin-top:4px;
+        letter-spacing:4px;
+      }
+
+      /* =========================
+         모바일
+      ========================= */
+      @media(max-width:880px){
+        .lobby-grid{
+          grid-template-columns:1fr;
+        }
+
+        .lobby-section-head{
+          align-items:flex-start;
+          flex-direction:column;
+        }
+
+        .lobby-toolbar{
+          justify-content:flex-start;
+        }
+
+        .rule-two-col{
+          grid-template-columns:1fr;
+        }
+
+        .rank-card-grid{
+          grid-template-columns:repeat(3,1fr);
+        }
+
+        .room-item{
+          align-items:flex-start;
+          flex-direction:column;
+        }
+
+        .room-item .btn{
+          width:100%;
+        }
+      }
+
+/* =========================
+   모바일 최종 오버라이드
+   - 7:3 화면 분할
+   - 채팅/AUTO 플로팅 버튼 복구
+   - PC 자동 버튼 모바일 숨김
+   - 제출/패스 영역 고정
+========================= */
+@media(max-width:880px){
+body:has(#roomView.show){
+  overflow:hidden!important;
+
+  /* 모바일 플레이어/중앙판 기준값 */
+  --side-player-w: clamp(58px, 17vw, 72px);
+  --side-player-h: clamp(62px, 10.5dvh, 74px);
+
+  --top-player-w: clamp(104px, 31vw, 126px);
+  --top-player-h: clamp(52px, 8.2dvh, 62px);
+
+  --seat-edge-gap: 5px;
+  --center-seat-gap: 8px;
+}
+  body:has(#roomView.show) .dalmuti-app{height:100dvh!important;padding:4px!important;overflow:hidden!important;}
+  body:has(#roomView.show) .game-panel{height:100dvh!important;min-height:100dvh!important;padding:6px!important;display:flex!important;flex-direction:column!important;gap:4px!important;overflow:hidden!important;}
+
+  body:has(#roomView.show) .room-head{
+    flex:0 0 36px!important;
+    height:36px!important;
+    min-height:36px!important;
+    display:grid!important;
+    grid-template-columns:32px minmax(0,1fr)!important;
+    align-items:center!important;
+    gap:6px!important;
+    padding:0 2px!important;
+    overflow:hidden!important;
+  }
+
+  body:has(#roomView.show) .room-head>div:first-of-type{
+    grid-column:2!important;
+    min-width:0!important;
+    display:block!important;
+    overflow:hidden!important;
+  }
+
+  body:has(#roomView.show) .mobile-menu-btn{
+    grid-column:1!important;
+    grid-row:1!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:32px!important;
+    height:32px!important;
+    min-width:32px!important;
+    padding:0!important;
+    border-radius:10px!important;
+    font-size:18px!important;
+    line-height:1!important;
+  }
+
+  body:has(#roomView.show) .room-head h2{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    font-size:14px!important;
+    line-height:36px!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+  body:has(#roomView.show) .room-head .eyebrow{
+    display:none!important;
+  }
+
+  body:has(#roomView.show) .turn-badge{
+    display:none!important;
+  }
+  body:has(#roomView.show) .message-bar,body:has(#roomView.show) .turn-badge{display:none!important;}
+
+  body:has(#roomView.show) .table-wrap{flex:7 1 0!important;min-height:0!important;height:auto!important;max-height:none!important;margin:0!important;border-radius:16px!important;overflow:hidden!important;position:relative!important;}
+  body:has(#roomView.show) .hand-header{flex:0 0 28px!important;height:28px!important;min-height:28px!important;margin:0!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:6px!important;}
+  body:has(#roomView.show) .hand-header h3{margin:0!important;font-size:13px!important;line-height:1!important;}
+  body:has(#roomView.show) .hand-header .muted{display:none!important;}
+  body:has(#roomView.show) .selected-summary{font-size:12px!important;line-height:1!important;padding:5px 7px!important;white-space:nowrap!important;}
+  body:has(#roomView.show) .hand-area{flex:2.25 1 0!important;min-height:0!important;height:auto!important;margin:0!important;padding:7px!important;gap:8px!important;border-radius:14px!important;align-items:center!important;}
+  body:has(#roomView.show) .hand-stack{width:70px!important;flex:0 0 auto!important;}
+  body:has(#roomView.show) .hand-stack img{width:70px!important;border-radius:8px!important;}
+  body:has(#roomView.show) .hand-stack.selected{transform:translateY(-8px)!important;}
+  body:has(#roomView.show) .stack-count,body:has(#roomView.show) .stack-selected{font-size:10px!important;padding:2px 5px!important;}
+
+  body:has(#roomView.show) .action-row{flex:.75 0 42px!important;height:42px!important;min-height:42px!important;margin:0!important;gap:6px!important;display:flex!important;}
+  body:has(#roomView.show) .action-row.hidden{display:flex!important;visibility:hidden!important;pointer-events:none!important;}
+  body:has(#roomView.show) .action-row .btn{flex:1 1 0!important;height:38px!important;padding:8px 6px!important;font-size:13px!important;}
+  body:has(#roomView.show) .action-row .btn:disabled{opacity:.42!important;filter:grayscale(.55)!important;cursor:not-allowed!important;transform:none!important;}
+  body:has(#roomView.show) #autoPlayBtn{display:none!important;}
+
+  body:has(#roomView.show) .mobile-chat-btn{position:fixed!important;right:14px!important;bottom:14px!important;z-index:230!important;display:flex!important;align-items:center!important;justify-content:center!important;width:46px!important;height:46px!important;border:1px solid rgba(243,210,129,.45)!important;border-radius:999px!important;background:rgba(13,19,32,.96)!important;color:#f3d281!important;box-shadow:0 12px 34px rgba(0,0,0,.45)!important;font-size:22px!important;line-height:1!important;cursor:pointer!important;}
+  body:has(#roomView.show) .mobile-chat-btn.has-unread::after{
+    content:attr(data-unread);
+    position:absolute;
+    right:-4px;
+    top:-4px;
+    min-width:18px;
+    height:18px;
+    padding:0 5px;
+    border-radius:999px;
+    background:#ff5c5c;
+    color:#fff;
+    border:2px solid rgba(13,19,32,.96);
+    font-size:10px;
+    line-height:14px;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 6px 14px rgba(0,0,0,.35);
+  }
+         body:has(#roomView.show) .mobile-auto-btn{position:fixed!important;right:18px!important;bottom:68px!important;z-index:230!important;display:flex!important;align-items:center!important;justify-content:center!important;width:38px!important;height:38px!important;border:1px solid rgba(111,179,255,.55)!important;border-radius:999px!important;background:rgba(13,19,32,.96)!important;color:#9fcaff!important;box-shadow:0 10px 28px rgba(0,0,0,.42)!important;font-size:9px!important;font-weight:900!important;letter-spacing:.02em!important;cursor:pointer!important;}
+  body:has(#roomView.show) .mobile-auto-btn.primary{border-color:rgba(243,210,129,.7)!important;background:rgba(243,210,129,.95)!important;color:#160f07!important;}
+  body.mobile-chat-open:has(#roomView.show) .mobile-chat-btn,body.mobile-chat-open:has(#roomView.show) .mobile-auto-btn{display:none!important;}
+
+  body:has(#roomView.show) .players-area{position:absolute!important;inset:0!important;z-index:3!important;pointer-events:none!important;}
+  body:has(#roomView.show) .player-box{
+  width:var(--side-player-w)!important;
+  height:var(--side-player-h)!important;
+  min-height:var(--side-player-h)!important;
+  padding:4px!important;
+  border-radius:11px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  overflow:hidden!important;
+  pointer-events:auto!important;
+}
+  body:has(#roomView.show) .player-role{width:100%!important;height:11px!important;font-size:9px!important;line-height:11px!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  body:has(#roomView.show) .player-name{width:100%!important;height:13px!important;font-size:10px!important;line-height:13px!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  body:has(#roomView.show) .player-meta{width:100%!important;height:12px!important;font-size:9px!important;line-height:12px!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;margin-top:1px!important;}
+  body:has(#roomView.show) .badge{display:block!important;width:40px!important;height:11px!important;line-height:9px!important;margin:1px auto 0!important;padding:1px 3px!important;font-size:8px!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;flex:0 0 auto!important;}
+  body:has(#roomView.show) .seat-bottom{display:none!important;}
+  body:has(#roomView.show) .seat-top-0{
+    top:var(--seat-edge-gap)!important;
+    left:50%!important;
+    transform:translateX(-50%)!important;
+  }
+
+  body:has(#roomView.show) .seat-top-1{
+    top:var(--seat-edge-gap)!important;
+    left:var(--seat-edge-gap)!important;
+    right:auto!important;
+    transform:none!important;
+  }
+
+  body:has(#roomView.show) .seat-top-2{
+    top:var(--seat-edge-gap)!important;
+    right:var(--seat-edge-gap)!important;
+    left:auto!important;
+    transform:none!important;
+  }
+  body:has(#roomView.show) .seat-left-1{
+    left:var(--seat-edge-gap)!important;
+    top:calc(var(--top-player-h) + 18px)!important;
+    transform:none!important;
+  }
+
+  body:has(#roomView.show) .seat-left-0{
+    left:var(--seat-edge-gap)!important;
+    top:calc(50% - (var(--side-player-h) / 2))!important;
+    transform:none!important;
+  }
+
+  body:has(#roomView.show) .seat-left-2{
+    left:var(--seat-edge-gap)!important;
+    top:auto!important;
+    bottom:var(--seat-edge-gap)!important;
+    transform:none!important;
+  }
+
+  body:has(#roomView.show) .seat-right-1{
+    right:var(--seat-edge-gap)!important;
+    top:calc(var(--top-player-h) + 18px)!important;
+    transform:none!important;
+  }
+
+  body:has(#roomView.show) .seat-right-0{
+    right:var(--seat-edge-gap)!important;
+    top:calc(50% - (var(--side-player-h) / 2))!important;
+    transform:none!important;
+  }
+
+  body:has(#roomView.show) .seat-right-2{
+    right:var(--seat-edge-gap)!important;
+    top:auto!important;
+    bottom:var(--seat-edge-gap)!important;
+    transform:none!important;
+  }
+
+  body:has(#roomView.show) .center-pile{
+    width:calc(100% - (var(--side-player-w) * 2) - (var(--seat-edge-gap) * 2) - (var(--center-seat-gap) * 2))!important;
+    height:calc(100% - 12px)!important;
+    min-height:0!important;
+    max-width:none!important;
+    left:50%!important;
+    top:50%!important;
+    transform:translate(-50%,-50%)!important;
+    padding:0!important;
+    border-radius:16px!important;
+    overflow:hidden!important;
+  }
+  body:has(#roomView.show) .pile-board{height:100%!important;}
+  body:has(#roomView.show) .prev-pile{display:none!important;}
+  body:has(#roomView.show) .cur-pile{left:0!important;right:0!important;top:0!important;bottom:0!important;padding:8px 3px!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+  body:has(#roomView.show) .cur-pile-title{font-size:13px!important;line-height:1.2!important;margin-bottom:8px!important;text-align:center!important;white-space:nowrap!important;}
+  body:has(#roomView.show) .cur-cards{max-width:100%!important;overflow:visible!important;}
+  body:has(#roomView.show) .cur-cards img{width:108px!important;border-radius:10px!important;margin-left:var(--mobile-pile-overlap,-60px)!important;}
+  body:has(#roomView.show) .cur-cards img:first-child{margin-left:0!important;}
+  body:has(#roomView.show) .cur-cards.mobile-pile-count-1{--mobile-pile-overlap:0px!important;}
+  body:has(#roomView.show) .cur-cards.mobile-pile-count-2{--mobile-pile-overlap:-28px!important;}
+  body:has(#roomView.show) .cur-cards.mobile-pile-count-3{--mobile-pile-overlap:-60px!important;}
+  body:has(#roomView.show) .cur-cards.mobile-pile-count-4{--mobile-pile-overlap:-75px!important;}
+  body:has(#roomView.show) .cur-cards.mobile-pile-count-many{--mobile-pile-overlap:-88px!important;}
+    body:has(#roomView.show) .cur-cards img.mobile-joker-gap{margin-left:calc(var(--mobile-pile-overlap,-60px) + 20px)!important;}
+
+  body:has(#roomView.show) #tributePanel{
+    left:50%!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:calc(30dvh + 54px)!important;
+    transform:translateX(-50%)!important;
+    width:min(320px, calc(100vw - 24px))!important;
+    max-width:calc(100vw - 24px)!important;
+    padding:12px!important;
+    border-radius:18px!important;
+    z-index:210!important;
+  }
+
+  body:has(#roomView.show) #tributePanel .tribute-title{
+    font-size:13px!important;
+    text-align:center!important;
+  }
+
+  body:has(#roomView.show) #tributePanel .tribute-line{
+    font-size:12px!important;
+    text-align:center!important;
+    margin:6px 0!important;
+  }
+
+  body:has(#roomView.show) #tributePanel .tribute-cards{
+    justify-content:center!important;
+    gap:7px!important;
+  }
+
+  body:has(#roomView.show) #tributePanel .tribute-cards img{
+    width:46px!important;
+    border-radius:8px!important;
+  }
+  body:has(#roomView.show) .mobile-leave-room-btn{
+    display:none!important;
+  }
+
+  body.mobile-menu-open:has(#roomView.show) .mobile-leave-room-btn{
+    display:flex!important;
+    width:100%!important;
+    justify-content:center!important;
+    margin-top:10px!important;
+  }   
+
+           /* =========================
+     모바일 상단 플레이어 카드 3줄 구조
+     1줄: 계급 + 닉네임
+     2줄: 카드 수 / 상태
+     3줄: 배지
+  ========================= */
+
+  body:has(#roomView.show) .seat-top-0,
+  body:has(#roomView.show) .seat-top-1,
+  body:has(#roomView.show) .seat-top-2{
+    width:var(--top-player-w)!important;
+    height:var(--top-player-h)!important;
+    min-height:var(--top-player-h)!important;
+    padding:4px 6px!important;
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr)!important;
+    grid-template-rows:16px 15px 15px!important;
+    column-gap:4px!important;
+    row-gap:1px!important;
+    align-items:center!important;
+    justify-content:initial!important;
+    overflow:hidden!important;
+  }
+
+  body:has(#roomView.show) .seat-top-0 .player-role,
+  body:has(#roomView.show) .seat-top-1 .player-role,
+  body:has(#roomView.show) .seat-top-2 .player-role{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:auto!important;
+    max-width:42px!important;
+    height:16px!important;
+    font-size:9px!important;
+    line-height:16px!important;
+    text-align:left!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    color:#f3d281!important;
+    font-weight:900!important;
+  }
+
+  body:has(#roomView.show) .seat-top-0 .player-name,
+  body:has(#roomView.show) .seat-top-1 .player-name,
+  body:has(#roomView.show) .seat-top-2 .player-name{
+    grid-column:2!important;
+    grid-row:1!important;
+    width:100%!important;
+    height:16px!important;
+    font-size:10px!important;
+    line-height:16px!important;
+    text-align:left!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+  body:has(#roomView.show) .seat-top-0 .player-meta,
+  body:has(#roomView.show) .seat-top-1 .player-meta,
+  body:has(#roomView.show) .seat-top-2 .player-meta{
+    grid-column:1 / -1!important;
+    grid-row:2!important;
+    width:100%!important;
+    height:15px!important;
+    max-width:none!important;
+    font-size:9px!important;
+    line-height:15px!important;
+    text-align:left!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    margin:0!important;
+  }
+
+  body:has(#roomView.show) .seat-top-0 .badge,
+  body:has(#roomView.show) .seat-top-1 .badge,
+  body:has(#roomView.show) .seat-top-2 .badge{
+    grid-row:3!important;
+    grid-column:auto!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:auto!important;
+    min-width:28px!important;
+    max-width:52px!important;
+    height:14px!important;
+    margin:0 3px 0 0!important;
+    padding:1px 4px!important;
+    font-size:8px!important;
+    line-height:1!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    align-self:center!important;
+    justify-self:start!important;
+  }
+}
+
+/* =========================
+   모바일 사이드 패널 / 메뉴 시트
+========================= */
+@media(max-width:880px){
+  .mobile-menu-btn,
+  .mobile-chat-btn,
+  .mobile-auto-btn,
+  .mobile-panel-backdrop{
+    display:none;
+  }
+
+  body:has(#roomView.show) .dalmuti-topbar{
+    display:none!important;
+  }
+
+  body.mobile-menu-open .mobile-panel-backdrop,
+  body.mobile-chat-open .mobile-panel-backdrop{
+    position:fixed;
+    inset:0;
+    z-index:205;
+    display:block;
+    background:rgba(0,0,0,.42);
+  }
+
+  body:has(#roomView.show) .side-panel{
+    display:none!important;
+  }
+
+  body.mobile-menu-open:has(#roomView.show) .side-panel,
+  body.mobile-chat-open:has(#roomView.show) .side-panel{
+    position:fixed;
+    left:10px;
+    right:10px;
+    bottom:10px;
+    z-index:220;
+    display:block!important;
+    max-height:72dvh;
+    overflow:auto;
+    border-radius:20px;
+    padding:12px;
+    box-shadow:0 20px 70px rgba(0,0,0,.62);
+  }
+
+  body.mobile-chat-open:has(#roomView.show) .side-panel>*{
+    display:none!important;
+  }
+
+  body.mobile-chat-open:has(#roomView.show) .side-panel .mobile-chat-section{
+    display:block!important;
+  }
+
+  body.mobile-menu-open:has(#roomView.show) .side-panel .mobile-chat-section{
+    display:none!important;
+  }
+
+  body.mobile-menu-open:has(#roomView.show) .side-panel .mobile-score-section,
+  body.mobile-menu-open:has(#roomView.show) .side-panel .side-box{
+    display:block!important;
+  }
+
+  body.mobile-chat-open:has(#roomView.show) .chat-list{
+    height:42dvh;
+  }
+}
+
+/* =========================
+   눈치보기 / 업무모드 1단계
+   - 게임 로직 유지
+   - 엑셀/업무표 느낌으로 색상과 분위기만 전환
+========================= */
+
+body.office-mode{
+  background:#f3f6f4!important;
+  color:#202124!important;
+}
+
+body.office-mode .dalmuti-app{
+  background:#f3f6f4!important;
+  color:#202124!important;
+  font-family:Arial, "Malgun Gothic", sans-serif!important;
+}
+
+body.office-mode .panel,
+body.office-mode .game-panel,
+body.office-mode .side-panel,
+body.office-mode .side-box,
+body.office-mode .table-wrap,
+body.office-mode .hand-area,
+body.office-mode .center-pile{
+  background:#ffffff!important;
+  color:#202124!important;
+  border:1px solid #c7d1c9!important;
+  box-shadow:none!important;
+  border-radius:4px!important;
+}
+
+body.office-mode .dalmuti-topbar{
+  background:#107c41!important;
+  color:#ffffff!important;
+  border:0!important;
+  border-radius:0!important;
+  padding:8px 10px!important;
+}
+
+body.office-mode .dalmuti-topbar h1{
+  color:#ffffff!important;
+  font-size:18px!important;
+}
+
+body.office-mode .eyebrow{
+  color:#e7f3eb!important;
+}
+
+body.office-mode #roomTitle,
+body.office-mode .room-head h2{
+  color:#107c41!important;
+}
+
+body.office-mode .room-head{
+  background:#ffffff!important;
+  border:1px solid #c7d1c9!important;
+  border-radius:4px!important;
+}
+
+body.office-mode .message-bar{
+  background:#eef6f0!important;
+  color:#202124!important;
+  border:1px solid #b9d7c1!important;
+  border-radius:3px!important;
+}
+
+body.office-mode .player-box{
+  background:#ffffff!important;
+  color:#202124!important;
+  border:1px solid #b7c7bd!important;
+  box-shadow:none!important;
+  border-radius:3px!important;
+}
+
+body.office-mode .player-box.turn{
+  border:2px solid #107c41!important;
+  background:#eef6f0!important;
+}
+
+body.office-mode .player-box.submitted{
+  border-color:#107c41!important;
+  box-shadow:inset 0 0 0 1px #107c41!important;
+}
+
+body.office-mode .player-box.passed{
+  opacity:1!important;
+  background:#f1f3f4!important;
+  border-color:#c7cdd1!important;
+}
+
+body.office-mode .player-role{
+  color:#107c41!important;
+}
+
+body.office-mode .player-name,
+body.office-mode .player-meta{
+  color:#202124!important;
+}
+
+body.office-mode .badge{
+  background:#eaf3ec!important;
+  border:1px solid #8bbf9c!important;
+  color:#107c41!important;
+  border-radius:2px!important;
+}
+
+body.office-mode .badge.turn{
+  background:#dff0e5!important;
+  border-color:#107c41!important;
+  color:#107c41!important;
+}
+
+body.office-mode .badge.submit{
+  background:#e2f0d9!important;
+  border-color:#70ad47!important;
+  color:#375623!important;
+}
+
+body.office-mode .badge.pass{
+  background:#f2f2f2!important;
+  border-color:#bfbfbf!important;
+  color:#595959!important;
+}
+
+body.office-mode .badge.ai{
+  background:#ddebf7!important;
+  border-color:#5b9bd5!important;
+  color:#1f4e79!important;
+}
+
+body.office-mode .pile-board{
+  background:
+    linear-gradient(#e6ece8 1px, transparent 1px),
+    linear-gradient(90deg, #e6ece8 1px, transparent 1px)!important;
+  background-size:44px 28px!important;
+}
+
+body.office-mode .pile-empty,
+body.office-mode .cur-pile-title,
+body.office-mode .prev-pile-title,
+body.office-mode .side-title,
+body.office-mode .result-title,
+body.office-mode .rule-title{
+  color:#107c41!important;
+}
+
+body.office-mode .prev-pile,
+body.office-mode .cur-pile{
+  background:rgba(255,255,255,.88)!important;
+  border:1px solid #c7d1c9!important;
+  border-radius:3px!important;
+}
+
+body.office-mode .hand-header h3,
+body.office-mode .selected-summary{
+  color:#202124!important;
+}
+
+body.office-mode .hand-stack{
+  background:#ffffff!important;
+  border:1px solid #c7d1c9!important;
+  border-radius:3px!important;
+  box-shadow:none!important;
+}
+
+body.office-mode .hand-stack.selected{
+  border-color:#107c41!important;
+  background:#eaf3ec!important;
+  box-shadow:inset 0 0 0 2px #107c41!important;
+}
+
+body.office-mode .hand-stack.disabled{
+  opacity:.45!important;
+}
+
+body.office-mode .stack-count,
+body.office-mode .stack-selected{
+  background:#107c41!important;
+  color:#ffffff!important;
+  border-radius:2px!important;
+}
+
+body.office-mode .btn{
+  background:#ffffff!important;
+  color:#107c41!important;
+  border:1px solid #107c41!important;
+  box-shadow:none!important;
+  border-radius:3px!important;
+  font-weight:700!important;
+}
+
+body.office-mode .btn.primary{
+  background:#107c41!important;
+  color:#ffffff!important;
+}
+
+body.office-mode .btn.danger{
+  background:#ffffff!important;
+  color:#c00000!important;
+  border-color:#c00000!important;
+}
+
+body.office-mode .btn:disabled{
+  background:#f2f2f2!important;
+  color:#8a8a8a!important;
+  border-color:#c9c9c9!important;
+}
+
+body.office-mode .chat-list,
+body.office-mode .chat-msg,
+body.office-mode .room-item,
+body.office-mode .rule-block,
+body.office-mode .rank-card-mini,
+body.office-mode .result-row,
+body.office-mode .score-row{
+  background:#ffffff!important;
+  color:#202124!important;
+  border-color:#d9e2dc!important;
+  border-radius:2px!important;
+}
+
+body.office-mode .chat-name{
+  color:#107c41!important;
+}
+
+body.office-mode .muted,
+body.office-mode .room-meta{
+  color:#5f6368!important;
+}
+
+body.office-mode .mobile-menu-btn,
+body.office-mode .mobile-chat-btn,
+body.office-mode .mobile-auto-btn{
+  background:#ffffff!important;
+  color:#107c41!important;
+  border:1px solid #107c41!important;
+  box-shadow:none!important;
+}
+
+body.office-mode .mobile-auto-btn.primary{
+  background:#107c41!important;
+  color:#ffffff!important;
+}
+
+body.office-mode .mobile-office-mode-btn{
+  display:none!important;
+}
+
+body.office-mode.mobile-menu-open:has(#roomView.show) .mobile-office-mode-btn{
+  display:flex!important;
+  width:100%!important;
+  justify-content:center!important;
+  margin-top:10px!important;
+}
+
+body.office-mode .office-mode-btn{
+  margin-left:8px!important;
+}
+
+body.office-mode #tributePanel,
+body.office-mode .modal-card,
+body.office-mode .create-room-card{
+  background:#ffffff!important;
+  color:#202124!important;
+  border:1px solid #107c41!important;
+  border-radius:4px!important;
+  box-shadow:0 8px 28px rgba(0,0,0,.18)!important;
+}
+
+body.office-mode .modal-head h2,
+body.office-mode .tribute-title{
+  color:#107c41!important;
+}
+
+/* 모바일 업무모드 보정 */
+@media(max-width:880px){
+  body.office-mode:has(#roomView.show) .room-head{
+    background:#107c41!important;
+    color:#ffffff!important;
+    border-color:#107c41!important;
+  }
+
+  body.office-mode:has(#roomView.show) .room-head h2{
+    color:#ffffff!important;
+  }
+
+  body.office-mode:has(#roomView.show) .mobile-menu-btn{
+    background:#ffffff!important;
+    color:#107c41!important;
+  }
+
+  body.office-mode:has(#roomView.show) .side-panel{
+    background:#ffffff!important;
+  }
+
+  body.office-mode.mobile-menu-open:has(#roomView.show) .mobile-office-mode-btn{
+    display:flex!important;
+  }
+}
+
+/* =========================
+   눈치보기 / 업무모드 2단계
+   - 손패를 카드 이미지 대신 표 목록처럼 표시
+========================= */
+
+.office-card-cell{
+  display:none;
+}
+
+body.office-mode #handArea{
+  display:block!important;
+  overflow:auto!important;
+  padding:0!important;
+  gap:0!important;
+  background:#ffffff!important;
+  border:1px solid #b7c7bd!important;
+}
+
+body.office-mode #handArea::before{
+  content:"No.   구분                 수량     상태";
+  display:grid;
+  grid-template-columns:52px minmax(0,1fr) 54px 72px;
+  align-items:center;
+  height:30px;
+  padding:0 10px;
+  background:#107c41;
+  color:#ffffff;
+  font-size:12px;
+  font-weight:900;
+  border-bottom:1px solid #0b5f31;
+  white-space:pre;
+}
+
+body.office-mode #handArea .hand-stack{
+  width:100%!important;
+  height:32px!important;
+  min-height:32px!important;
+  display:grid!important;
+  grid-template-columns:52px minmax(0,1fr) 54px 72px!important;
+  align-items:center!important;
+  gap:0!important;
+  padding:0 10px!important;
+  margin:0!important;
+  border:0!important;
+  border-bottom:1px solid #d9e2dc!important;
+  border-radius:0!important;
+  background:#ffffff!important;
+  box-shadow:none!important;
+  transform:none!important;
+  cursor:pointer!important;
+}
+
+body.office-mode #handArea .hand-stack:nth-child(even){
+  background:#f8fbf9!important;
+}
+
+body.office-mode #handArea .hand-stack:hover{
+  background:#eef6f0!important;
+}
+
+body.office-mode #handArea .hand-stack.selected{
+  background:#dff0e5!important;
+  box-shadow:inset 4px 0 0 #107c41!important;
+  border-color:#b7d7c1!important;
+  transform:none!important;
+}
+
+body.office-mode #handArea .hand-stack.disabled{
+  opacity:.58!important;
+  background:#f2f2f2!important;
+}
+
+body.office-mode #handArea .hand-stack img,
+body.office-mode #handArea .hand-stack .stack-count,
+body.office-mode #handArea .hand-stack .stack-selected{
+  display:none!important;
+}
+
+body.office-mode #handArea .office-card-cell{
+  display:block!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:12px!important;
+  line-height:32px!important;
+  color:#202124!important;
+}
+
+body.office-mode #handArea .office-code{
+  font-weight:900!important;
+  color:#107c41!important;
+}
+
+body.office-mode #handArea .office-name{
+  font-weight:700!important;
+}
+
+body.office-mode #handArea .office-count{
+  text-align:center!important;
+}
+
+body.office-mode #handArea .office-status{
+  text-align:center!important;
+  font-size:11px!important;
+  color:#5f6368!important;
+}
+
+body.office-mode #handArea .hand-stack.selected .office-status{
+  color:#107c41!important;
+  font-weight:900!important;
+}
+
+/* 모바일 업무모드 손패 표 보정 */
+@media(max-width:880px){
+  body.office-mode:has(#roomView.show) #handArea{
+    min-height:0!important;
+    height:auto!important;
+    border-radius:3px!important;
+  }
+
+  body.office-mode:has(#roomView.show) #handArea::before{
+    grid-template-columns:42px minmax(0,1fr) 42px 58px;
+    height:26px;
+    padding:0 7px;
+    font-size:10px;
+  }
+
+  body.office-mode:has(#roomView.show) #handArea .hand-stack{
+    grid-template-columns:42px minmax(0,1fr) 42px 58px!important;
+    height:28px!important;
+    min-height:28px!important;
+    padding:0 7px!important;
+  }
+
+  body.office-mode:has(#roomView.show) #handArea .office-card-cell{
+    font-size:11px!important;
+    line-height:28px!important;
+  }
+
+  body.office-mode:has(#roomView.show) #handArea .office-status{
+    font-size:10px!important;
+  }
+}
+
+/* =========================
+   눈치보기 / 업무모드 3단계
+   - 중앙판 제출 카드 영역을 업무표처럼 표시
+========================= */
+
+.office-pile-table{
+  display:none;
+}
+
+body.office-mode .office-pile-table{
+  display:block!important;
+  width:100%!important;
+  max-width:520px!important;
+  margin:0 auto!important;
+  border:1px solid #b7c7bd!important;
+  background:#ffffff!important;
+  color:#202124!important;
+  font-family:Arial, "Malgun Gothic", sans-serif!important;
+}
+
+body.office-mode .office-pile-caption{
+  height:32px;
+  line-height:32px;
+  padding:0 10px;
+  background:#107c41;
+  color:#ffffff;
+  font-size:13px;
+  font-weight:900;
+  border-bottom:1px solid #0b5f31;
+}
+
+body.office-mode .office-pile-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 58px 72px;
+  min-height:34px;
+  align-items:center;
+  border-bottom:1px solid #d9e2dc;
+  font-size:12px;
+}
+
+body.office-mode .office-pile-row:last-child{
+  border-bottom:0;
+}
+
+body.office-mode .office-pile-row.header{
+  background:#eaf3ec!important;
+  color:#107c41!important;
+  font-weight:900!important;
+}
+
+body.office-mode .office-pile-row span,
+body.office-mode .office-pile-row strong{
+  min-width:0;
+  padding:0 8px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+body.office-mode .office-pile-row strong{
+  text-align:center;
+  color:#107c41;
+}
+
+body.office-mode .cur-pile{
+  left:14px!important;
+  right:14px!important;
+  top:14px!important;
+  bottom:14px!important;
+  padding:12px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:#ffffff!important;
+  border:1px solid #c7d1c9!important;
+  border-radius:3px!important;
+}
+
+body.office-mode .cur-pile-title,
+body.office-mode .cur-cards{
+  display:none!important;
+}
+
+body.office-mode .prev-pile{
+  display:none!important;
+}
+
+/* 모바일 업무모드 중앙판 보정 */
+@media(max-width:880px){
+  body.office-mode:has(#roomView.show) .cur-pile{
+    left:8px!important;
+    right:8px!important;
+    top:8px!important;
+    bottom:8px!important;
+    padding:8px!important;
+  }
+
+  body.office-mode:has(#roomView.show) .office-pile-table{
+    max-width:100%!important;
+  }
+
+  body.office-mode:has(#roomView.show) .office-pile-caption{
+    height:28px;
+    line-height:28px;
+    font-size:11px;
+    padding:0 7px;
+  }
+
+  body.office-mode:has(#roomView.show) .office-pile-row{
+    grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 42px 54px;
+    min-height:28px;
+    font-size:10px;
+  }
+
+  body.office-mode:has(#roomView.show) .office-pile-row span,
+  body.office-mode:has(#roomView.show) .office-pile-row strong{
+    padding:0 5px;
+  }
+}
+
+/* =========================
+   눈치보기 / 업무모드 4단계
+   - 플레이어 카드 영역을 업무 현황표처럼 표시
+========================= */
+
+.office-player-table{
+  display:none;
+}
+
+body.office-mode .office-player-table{
+  display:block!important;
+  position:absolute!important;
+  left:14px!important;
+  right:14px!important;
+  top:14px!important;
+  z-index:12!important;
+  max-width:620px!important;
+  margin:0 auto!important;
+  border:1px solid #b7c7bd!important;
+  background:#ffffff!important;
+  color:#202124!important;
+  font-family:Arial, "Malgun Gothic", sans-serif!important;
+  box-shadow:none!important;
+}
+
+body.office-mode .office-player-caption{
+  height:32px;
+  line-height:32px;
+  padding:0 10px;
+  background:#107c41;
+  color:#ffffff;
+  font-size:13px;
+  font-weight:900;
+  border-bottom:1px solid #0b5f31;
+}
+
+body.office-mode .office-player-row{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) 78px 58px 72px;
+  min-height:30px;
+  align-items:center;
+  border-bottom:1px solid #d9e2dc;
+  font-size:12px;
+}
+
+body.office-mode .office-player-row:last-child{
+  border-bottom:0;
+}
+
+body.office-mode .office-player-row.header{
+  background:#eaf3ec!important;
+  color:#107c41!important;
+  font-weight:900!important;
+}
+
+body.office-mode .office-player-row span,
+body.office-mode .office-player-row strong{
+  min-width:0;
+  padding:0 8px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+body.office-mode .office-player-row strong{
+  text-align:center;
+  color:#107c41;
+}
+
+body.office-mode .office-player-row.current{
+  background:#fff2cc!important;
+}
+
+body.office-mode .office-player-row.submitted{
+  background:#e2f0d9!important;
+}
+
+body.office-mode .office-player-row.passed{
+  background:#f2f2f2!important;
+  color:#666!important;
+}
+
+body.office-mode .office-player-empty{
+  padding:12px;
+  font-size:12px;
+  color:#5f6368;
+}
+
+/* 업무모드에서는 기존 플레이어 카드 숨김 */
+body.office-mode .players-area .player-box{
+  display:none!important;
+}
+
+/* 모바일 업무모드 플레이어 현황표 보정 */
+@media(max-width:880px){
+  body.office-mode:has(#roomView.show) .office-player-table{
+    left:8px!important;
+    right:8px!important;
+    top:8px!important;
+    max-width:none!important;
+  }
+
+  body.office-mode:has(#roomView.show) .office-player-caption{
+    height:26px;
+    line-height:26px;
+    padding:0 7px;
+    font-size:11px;
+  }
+
+  body.office-mode:has(#roomView.show) .office-player-row{
+    grid-template-columns:30px minmax(0,1fr) 54px 42px 54px;
+    min-height:24px;
+    font-size:10px;
+  }
+
+  body.office-mode:has(#roomView.show) .office-player-row span,
+  body.office-mode:has(#roomView.show) .office-player-row strong{
+    padding:0 5px;
+  }
+}
+
+/* =========================
+   눈치보기 / 업무모드 통합 마감
+   - 담당자 현황표
+   - 손패 2열 표
+   - 버튼/채팅/모달 업무화 보정
+========================= */
+
+/* 플레이어 카드 → 담당자별 처리 현황표 */
+.office-player-table{
+  display:none;
+}
+
+body.office-mode .office-player-table{
+  display:block!important;
+  position:absolute!important;
+  left:14px!important;
+  right:14px!important;
+  top:14px!important;
+  z-index:12!important;
+  max-width:620px!important;
+  margin:0 auto!important;
+  border:1px solid #b7c7bd!important;
+  background:#ffffff!important;
+  color:#202124!important;
+  font-family:Arial, "Malgun Gothic", sans-serif!important;
+  box-shadow:none!important;
+}
+
+body.office-mode .office-player-caption{
+  height:32px;
+  line-height:32px;
+  padding:0 10px;
+  background:#107c41;
+  color:#ffffff;
+  font-size:13px;
+  font-weight:900;
+  border-bottom:1px solid #0b5f31;
+}
+
+body.office-mode .office-player-row{
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) 78px 58px 72px;
+  min-height:30px;
+  align-items:center;
+  border-bottom:1px solid #d9e2dc;
+  font-size:12px;
+}
+
+body.office-mode .office-player-row:last-child{
+  border-bottom:0;
+}
+
+body.office-mode .office-player-row.header{
+  background:#eaf3ec!important;
+  color:#107c41!important;
+  font-weight:900!important;
+}
+
+body.office-mode .office-player-row span,
+body.office-mode .office-player-row strong{
+  min-width:0;
+  padding:0 8px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+body.office-mode .office-player-row strong{
+  text-align:center;
+  color:#107c41;
+}
+
+body.office-mode .office-player-row.current{
+  background:#fff2cc!important;
+}
+
+body.office-mode .office-player-row.submitted{
+  background:#e2f0d9!important;
+}
+
+body.office-mode .office-player-row.passed{
+  background:#f2f2f2!important;
+  color:#666!important;
+}
+
+body.office-mode .office-player-empty{
+  padding:12px;
+  font-size:12px;
+  color:#5f6368;
+}
+
+body.office-mode .players-area .player-box{
+  display:none!important;
+}
+
+/* 손패 표 2열 배치 */
+body.office-mode #handArea{
+  display:grid!important;
+  grid-template-columns:repeat(2, minmax(0, 1fr))!important;
+  align-content:start!important;
+  gap:0!important;
+  overflow:auto!important;
+  padding:0!important;
+}
+
+body.office-mode #handArea::before{
+  grid-column:1 / -1!important;
+}
+
+body.office-mode #handArea .hand-stack{
+  width:auto!important;
+  max-width:none!important;
+  grid-template-columns:42px minmax(0,1fr) 42px 64px!important;
+}
+
+body.office-mode #handArea .office-card-cell{
+  font-size:11px!important;
+}
+
+/* 채팅 → 검토 메모 느낌 */
+body.office-mode .chat-list{
+  background:#ffffff!important;
+  border:1px solid #b7c7bd!important;
+}
+
+body.office-mode .chat-msg{
+  border-bottom:1px solid #e6ece8!important;
+  padding:6px 8px!important;
+}
+
+body.office-mode .chat-msg.system{
+  color:#5f6368!important;
+  background:#f8fbf9!important;
+}
+
+body.office-mode .chat-name::after{
+  content:":";
+}
+
+/* 모달 업무표 보정 */
+body.office-mode .modal-card{
+  background:#ffffff!important;
+  color:#202124!important;
+  border:1px solid #107c41!important;
+  border-radius:4px!important;
+}
+
+body.office-mode .modal-head h2{
+  color:#107c41!important;
+}
+
+body.office-mode .modal-row{
+  background:#ffffff!important;
+  border:1px solid #d9e2dc!important;
+  border-radius:0!important;
+}
+
+body.office-mode .modal-row.header{
+  background:#eaf3ec!important;
+  color:#107c41!important;
+}
+
+/* 모바일 보정 */
+@media(max-width:880px){
+  body.office-mode:has(#roomView.show) .office-player-table{
+    left:8px!important;
+    right:8px!important;
+    top:8px!important;
+    max-width:none!important;
+  }
+
+  body.office-mode:has(#roomView.show) .office-player-caption{
+    height:26px;
+    line-height:26px;
+    padding:0 7px;
+    font-size:11px;
+  }
+
+  body.office-mode:has(#roomView.show) .office-player-row{
+    grid-template-columns:30px minmax(0,1fr) 54px 42px 54px;
+    min-height:24px;
+    font-size:10px;
+  }
+
+  body.office-mode:has(#roomView.show) .office-player-row span,
+  body.office-mode:has(#roomView.show) .office-player-row strong{
+    padding:0 5px;
+  }
+
+  body.office-mode:has(#roomView.show) #handArea{
+    grid-template-columns:repeat(2, minmax(0, 1fr))!important;
+  }
+
+  body.office-mode:has(#roomView.show) #handArea .hand-stack{
+    grid-template-columns:28px minmax(0,1fr) 28px 44px!important;
+  }
+
+  body.office-mode:has(#roomView.show) #handArea .office-card-cell{
+    font-size:9px!important;
+  }
+}
+
+@media(max-width:420px){
+  body.office-mode:has(#roomView.show) #handArea{
+    grid-template-columns:1fr!important;
+  }
+}
+
+/* =========================
+   눈치보기 / 업무모드 배치 보정
+   - 왼쪽: 담당자별 처리 현황
+   - 오른쪽: 현재 처리 항목
+========================= */
+
+@media(min-width:881px){
+  body.office-mode .office-player-table{
+    left:14px!important;
+    right:auto!important;
+    top:14px!important;
+    width:calc(50% - 22px)!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+
+  body.office-mode .center-pile{
+    left:auto!important;
+    right:14px!important;
+    top:14px!important;
+    width:calc(50% - 22px)!important;
+    height:auto!important;
+    min-height:154px!important;
+    max-width:none!important;
+    transform:none!important;
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+  }
+
+  body.office-mode .cur-pile{
+    position:static!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:154px!important;
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+  }
+
+  body.office-mode .office-pile-table{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+
+  body.office-mode .pile-board{
+    min-height:190px!important;
+  }
+}
+
+/* =========================
+   눈치보기 / 업무모드 문구·입력부 보정
+   - 선택 없음 / 메시지 입력 배경 완화
+   - 손패 제목/상단 제목 업무표 톤 정리
+========================= */
+
+body.office-mode .hand-header h3{
+  color:#107c41!important;
+  font-weight:900!important;
+}
+
+body.office-mode .selected-summary{
+  background:#ffffff!important;
+  color:#5f6368!important;
+  border:1px solid #d9e2dc!important;
+  border-radius:3px!important;
+  box-shadow:none!important;
+}
+
+body.office-mode .selected-summary:empty{
+  display:none!important;
+}
+
+body.office-mode .chat-input-row,
+body.office-mode .chat-form,
+body.office-mode .side-panel input,
+body.office-mode .side-panel textarea{
+  background:#ffffff!important;
+  color:#202124!important;
+  border-color:#d9e2dc!important;
+  box-shadow:none!important;
+}
+
+body.office-mode #chatInput{
+  background:#ffffff!important;
+  color:#202124!important;
+  border:1px solid #d9e2dc!important;
+  box-shadow:none!important;
+  border-radius:3px!important;
+}
+
+body.office-mode #chatInput::placeholder{
+  color:#8a8f94!important;
+}
+
+body.office-mode .chat-list + div,
+body.office-mode .chat-list + .input-row,
+body.office-mode .side-panel .input-row{
+  background:transparent!important;
+  border-color:#d9e2dc!important;
+  box-shadow:none!important;
+}
+
+body.office-mode .room-head h2,
+body.office-mode #roomTitle{
+  color:#107c41!important;
+  font-weight:900!important;
+}
+
+@media(max-width:880px){
+  body.office-mode:has(#roomView.show) .room-head h2,
+  body.office-mode:has(#roomView.show) #roomTitle{
+    color:#ffffff!important;
+  }
+
+  body.office-mode:has(#roomView.show) .selected-summary{
+    background:#ffffff!important;
+    color:#5f6368!important;
+    border:1px solid #d9e2dc!important;
+    padding:4px 6px!important;
+  }
+
+  body.office-mode:has(#roomView.show) #chatInput{
+    background:#ffffff!important;
+  }
+}
+
+/* =========================
+   PC에서 모바일 전용 버튼 숨김
+   - 채팅 플로팅
+   - AUTO 플로팅
+   - 모바일 메뉴/나가기/눈치보기 버튼
+========================= */
+
+@media(min-width:881px){
+  .mobile-menu-btn,
+  .mobile-chat-btn,
+  .mobile-auto-btn,
+  .mobile-panel-backdrop,
+  .mobile-office-mode-btn,
+  .mobile-leave-room-btn{
+    display:none!important;
+  }
+}
+
+/* =========================
+   눈치보기 / 담당자 현황 관리 열
+========================= */
+
+body.office-mode .office-player-row{
+  grid-template-columns:42px minmax(0,1fr) 78px 58px 72px 54px!important;
+}
+
+body.office-mode .office-kick-btn{
+  width:42px;
+  height:22px;
+  padding:0;
+  border:1px solid #c00000;
+  background:#ffffff;
+  color:#c00000;
+  border-radius:3px;
+  font-size:11px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+body.office-mode .office-kick-btn:hover{
+  background:#fde9e7;
+}
+
+@media(max-width:880px){
+  body.office-mode:has(#roomView.show) .office-player-row{
+    grid-template-columns:28px minmax(0,1fr) 48px 36px 48px 38px!important;
+  }
+
+  body.office-mode:has(#roomView.show) .office-kick-btn{
+    width:32px;
+    height:20px;
+    font-size:10px;
+  }
+}
+
+/* =========================
+   눈치보기 / 관리 열 버튼 2개 표시
+   - 보기: 참가자를 보기 전용으로 전환
+   - 제외: 방에서 제외
+========================= */
+
+body.office-mode .office-player-row{
+  grid-template-columns:42px minmax(0,1fr) 78px 58px 72px 92px!important;
+}
+
+body.office-mode .office-manage-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:4px!important;
+  min-width:0!important;
+}
+
+body.office-mode .office-view-btn,
+body.office-mode .office-kick-btn{
+  width:40px!important;
+  height:22px!important;
+  padding:0!important;
+  border-radius:3px!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  cursor:pointer!important;
+  background:#ffffff!important;
+}
+
+body.office-mode .office-view-btn{
+  border:1px solid #107c41!important;
+  color:#107c41!important;
+}
+
+body.office-mode .office-view-btn:hover{
+  background:#eaf3ec!important;
+}
+
+body.office-mode .office-kick-btn{
+  border:1px solid #c00000!important;
+  color:#c00000!important;
+}
+
+body.office-mode .office-kick-btn:hover{
+  background:#fde9e7!important;
+}
+
+@media(max-width:880px){
+  body.office-mode:has(#roomView.show) .office-player-row{
+    grid-template-columns:28px minmax(0,1fr) 48px 36px 48px 68px!important;
+  }
+
+  body.office-mode:has(#roomView.show) .office-manage-actions{
+    gap:3px!important;
+  }
+
+  body.office-mode:has(#roomView.show) .office-view-btn,
+  body.office-mode:has(#roomView.show) .office-kick-btn{
+    width:30px!important;
+    height:20px!important;
+    font-size:10px!important;
+  }
+}
+
+/* =========================
+   눈치보기 / 채팅 닉네임 괄호 제거
+========================= */
+
+body.office-mode .chat-name::before{
+  content:""!important;
+  display:none!important;
+}
+
+body.office-mode .chat-name::after{
+  content:":"!important;
+}
