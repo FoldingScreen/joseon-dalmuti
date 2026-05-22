@@ -21,4 +21,5 @@
   loadCss("mobileTouchFixCss", "./mobile-touch-fix.css?v=20260522-touch1");
   loadScript("staleRoomCleanupCore", "./js/100-stale-room-cleanup-core.js?v=20260522-stale-room-core1");
   loadScript("jokerSelectionFix", "./js/101-joker-selection-fix.js?v=20260522-joker1");
+  loadScript("roundResultScoreFix", "./js/102-round-result-score-fix.js?v=20260523-score1");
 })();
