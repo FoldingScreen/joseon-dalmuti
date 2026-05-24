@@ -109,15 +109,155 @@
     else init();
   }
 
-  installNicknameChange();
-  installDetachBranding();
+function installSharedActionSfx() {
+  const KEY = "dalmutiSfxMuted";
+  let ctx = null;
+  let unlocked = false;
+  let ready = false;
+  let lastSubmit = "";
+  let lastPass = "";
+  let timer = null;
+
+  const me = () => String(localStorage.getItem("partyAppUser") || "").trim();
+  const muted = () => localStorage.getItem(KEY) === "1";
+
+  function audio() {
+    if (ctx) return ctx;
+
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    ctx = AudioCtx ? new AudioCtx() : null;
+
+    return ctx;
+  }
+
+  function unlock() {
+    const a = audio();
+    if (!a || unlocked) return;
+
+    if (a.state === "suspended") {
+      a.resume().catch(() => null);
+    }
+
+    unlocked = true;
+  }
+
+  function tone(freq, start, duration, gain) {
+    const a = audio();
+    if (!a || muted() || !unlocked) return;
+
+    const osc = a.createOscillator();
+    const g = a.createGain();
+    const t = a.currentTime + start;
+
+    osc.frequency.value = freq;
+
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+
+    osc.connect(g);
+    g.connect(a.destination);
+
+    osc.start(t);
+    osc.stop(t + duration + 0.02);
+  }
+
+  function fxSubmit() {
+    tone(90, 0, 0.09, 0.04);
+    tone(650, 0.02, 0.05, 0.015);
+  }
+
+  function fxPass() {
+    tone(145, 0, 0.075, 0.03);
+  }
+
+  function names(selector) {
+    return Array.from(document.querySelectorAll(selector))
+      .map(el => el.querySelector(".player-name")?.textContent?.trim() || "")
+      .filter(Boolean)
+      .sort();
+  }
+
+  function pile() {
+    const center = document.getElementById("centerPile");
+    const title = center?.querySelector?.(".cur-pile-title")?.textContent?.trim() || "";
+    const imgs = Array.from(center?.querySelectorAll?.(".cur-cards img") || [])
+      .map(img => img.src)
+      .join("|");
+
+    return title && imgs ? `${title}::${imgs}` : "";
+  }
+
+  function check() {
+    const mine = me();
+    const submitted = names(".player-box.submitted");
+    const passed = names(".player-box.passed");
+
+    const submitSig = `${pile()}::${submitted.join("|")}`;
+    const passSig = passed.join("|");
+
+    if (!ready) {
+      lastSubmit = submitSig;
+      lastPass = passSig;
+      ready = true;
+      return;
+    }
+
+    if (submitSig && submitSig !== lastSubmit && submitted.some(name => name !== mine)) {
+      fxSubmit();
+    }
+
+    if (passSig !== lastPass) {
+      const old = new Set(lastPass.split("|").filter(Boolean));
+
+      if (passed.some(name => name !== mine && !old.has(name))) {
+        fxPass();
+      }
+    }
+
+    lastSubmit = submitSig;
+    lastPass = passSig;
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    timer = setTimeout(check, 50);
+  }
+
+  function init() {
+    document.addEventListener("pointerdown", unlock, true);
+
+    const target = document.body;
+    if (!target || target.dataset.sharedActionSfx === "1") return;
+
+    target.dataset.sharedActionSfx = "1";
+
+    new MutationObserver(schedule).observe(target, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class"]
+    });
+
+    setTimeout(check, 300);
+  }
+
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+}
+  
+installNicknameChange();
+installDetachBranding();
+installSharedActionSfx();
 
   const scripts = [
     "./js/00-config.js?v=20260524-dalmuti5",
     "./js/92-presence-messages.js?v=20260518-presence1",
     "./js/88-pass-count-fix.js?v=20260518-passcount1",
     "./js/97-sfx.js?v=20260517-sfx2",
-    "./js/96-shared-action-sfx.js?v=20260517-sharedaction1",
     "./js/98-hard-remove.js?v=20260517-hardremove1",
     "./js/99-waiting-spectator-passfix.js?v=20260517-watchpass1"
   ];
