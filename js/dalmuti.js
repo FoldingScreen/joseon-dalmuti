@@ -466,6 +466,277 @@ function installMainSfx() {
     init();
   }
 }
+
+function installWaitingSpectatorFix() {
+  if (!window.firebase || !firebase.apps.length) return;
+
+  addStyle("dalmutiWatchForceCss", `
+    .watch-force-btn {
+      position: absolute;
+      right: 5px;
+      top: 28px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(45, 62, 98, .96);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 3px 6px;
+      cursor: pointer;
+      z-index: 3;
+    }
+  `);
+
+  const db = firebase.firestore();
+  const FV = firebase.firestore.FieldValue;
+
+  const roomCol = () => db.collection("events").doc("dalmuti").collection("rooms");
+  const cleanMap = obj => Object.fromEntries(Object.entries(obj || {}).filter(([, v]) => v && typeof v === "object"));
+  const countMap = obj => Object.values(cleanMap(obj)).length;
+  const currentUser = () => String(localStorage.getItem("partyAppUser") || "").trim();
+  const currentRoomId = () => String(localStorage.getItem("dalmutiCurrentRoomId") || "").trim();
+  const serverNow = () => FV.serverTimestamp();
+
+  function roomRef(roomId) {
+    return roomCol().doc(roomId);
+  }
+
+  function handRef(roomId, uid) {
+    return roomRef(roomId).collection("hands").doc(uid);
+  }
+
+  async function forceSpectator(uid) {
+    const roomId = currentRoomId();
+    const me = currentUser();
+
+    if (!roomId || !uid || uid === me) return;
+
+    const ref = roomRef(roomId);
+    const snap = await ref.get();
+
+    if (!snap.exists) return;
+
+    const room = snap.data();
+
+    if (!(room.hostUid === me || me === "병풍")) {
+      alert("방장만 관전시킬 수 있습니다.");
+      return;
+    }
+
+    if (room.status !== "waiting") {
+      alert("대기 중에만 관전시킬 수 있습니다.");
+      return;
+    }
+
+    const players = cleanMap(room.players);
+    const spectators = cleanMap(room.spectators);
+    const target = players[uid];
+
+    if (!target) {
+      alert("참가자 목록에 없는 대상입니다.");
+      return;
+    }
+
+    if (!confirm(`${target.nickname || uid}님을 관전자로 전환할까요?`)) return;
+
+    delete players[uid];
+
+    spectators[uid] = {
+      uid,
+      nickname: target.nickname || uid,
+      type: "spectator",
+      isAI: !!target.isAI,
+      removedFromRoom: false
+    };
+
+    const chatPreview = (room.chatPreview || []).slice(-11);
+
+    chatPreview.push({
+      type: "system",
+      uid: "system",
+      nickname: "",
+      text: `${target.nickname || uid}님이 관전자로 전환되었습니다.`,
+      createdAt: Date.now()
+    });
+
+    const batch = db.batch();
+
+    batch.update(ref, {
+      players,
+      spectators,
+      playerCount: countMap(players),
+      spectatorCount: countMap(spectators),
+      chatPreview,
+      updatedAt: serverNow()
+    });
+
+    batch.delete(handRef(roomId, uid));
+
+    await batch.commit();
+  }
+
+  function patchDalmuti() {
+    if (!window.Dalmuti) return;
+    window.Dalmuti.forceSpectator = forceSpectator;
+  }
+
+  function addForceSpectatorButtons() {
+    patchDalmuti();
+
+    const me = currentUser();
+
+    document.querySelectorAll(".player-box").forEach(box => {
+      if (box.querySelector(".watch-force-btn")) return;
+
+      const kick = box.querySelector(".kick-btn");
+      if (!kick) return;
+
+      const match = String(kick.getAttribute("onclick") || "").match(/Dalmuti\.kick\('([^']+)'\)/);
+      const uid = match?.[1];
+
+      if (!uid || uid === me) return;
+
+      const btn = document.createElement("button");
+
+      btn.type = "button";
+      btn.className = "watch-force-btn";
+      btn.textContent = "관전";
+
+      btn.onclick = event => {
+        event.preventDefault();
+        event.stopPropagation();
+        forceSpectator(uid).catch(console.error);
+      };
+
+      box.appendChild(btn);
+    });
+  }
+
+  function init() {
+    patchDalmuti();
+
+    setTimeout(addForceSpectatorButtons, 300);
+
+    const area = document.getElementById("playersArea") || document.body;
+
+    if (area.dataset.watchForceObserver === "1") return;
+    area.dataset.watchForceObserver = "1";
+
+    new MutationObserver(addForceSpectatorButtons).observe(area, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+}
+
+function installPassCountFix() {
+  const lastCardCountByName = new Map();
+  let scheduled = false;
+
+  function cleanName(box) {
+    return String(box.querySelector(".player-name")?.textContent || "").trim();
+  }
+
+  function metaText(box) {
+    return String(box.querySelector(".player-meta")?.textContent || "").trim();
+  }
+
+  function rememberCounts() {
+    document.querySelectorAll(".player-box").forEach(box => {
+      const name = cleanName(box);
+      const text = metaText(box);
+      const match = text.match(/(\d+)장/);
+
+      if (name && match) {
+        lastCardCountByName.set(name, `${match[1]}장`);
+      }
+    });
+  }
+
+  function ensurePassBadge(box) {
+    let badge = box.querySelector(".badge.pass");
+
+    if (!badge) {
+      badge = document.createElement("div");
+      badge.className = "badge pass";
+      badge.textContent = "패스";
+      box.appendChild(badge);
+    }
+
+    badge.style.setProperty("display", "inline-block", "important");
+    badge.style.setProperty("visibility", "visible", "important");
+    badge.style.setProperty("opacity", "1", "important");
+  }
+
+  function patchOnce() {
+    scheduled = false;
+    rememberCounts();
+
+    document.querySelectorAll(".player-box").forEach(box => {
+      const text = metaText(box);
+      const name = cleanName(box);
+      const hasPassText = /^패스/.test(text);
+      const hasPassClass = box.classList.contains("passed");
+      const hasPassBadge = !!box.querySelector(".badge.pass");
+
+      if (!hasPassText && !hasPassClass && !hasPassBadge) return;
+
+      const meta = box.querySelector(".player-meta");
+      if (!meta) return;
+
+      ensurePassBadge(box);
+
+      const countText = lastCardCountByName.get(name);
+
+      if (countText && (hasPassText || !/(\d+)장/.test(text))) {
+        meta.textContent = text.includes("준비")
+          ? `${countText} · 준비`
+          : countText;
+      }
+    });
+  }
+
+  function schedulePatch() {
+    if (scheduled) return;
+
+    scheduled = true;
+    requestAnimationFrame(patchOnce);
+  }
+
+  function init() {
+    schedulePatch();
+
+    const area = document.getElementById("playersArea");
+
+    if (area && area.dataset.passCountFix !== "1") {
+      area.dataset.passCountFix = "1";
+
+      new MutationObserver(schedulePatch).observe(area, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    document.addEventListener("click", event => {
+      if (event.target.closest?.("#passBtn")) {
+        setTimeout(schedulePatch, 120);
+        setTimeout(schedulePatch, 500);
+      }
+    }, true);
+  }
+
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+}
   
   installNicknameChange();
   installDetachBranding();
@@ -475,9 +746,7 @@ function installMainSfx() {
   const scripts = [
     "./js/00-config.js?v=20260524-dalmuti5",
     "./js/92-presence-messages.js?v=20260518-presence1",
-    "./js/88-pass-count-fix.js?v=20260518-passcount1",
     "./js/98-hard-remove.js?v=20260517-hardremove1",
-    "./js/99-waiting-spectator-passfix.js?v=20260517-watchpass1"
   ];
 
   document.write(
