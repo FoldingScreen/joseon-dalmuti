@@ -1690,20 +1690,26 @@ function resultRows(list, mode) {
       settings.innerHTML = office
         ? `
           <div class="side-title">문서 설정</div>
-<div class="room-setting-grid">
-  <label class="field-label" for="setTitle">문서 이름</label>
-  <input id="setTitle" class="input" maxlength="24" value="${esc(S.room.title || "")}">
+<div class="room-setting-grid setting-labeled-grid">
+  <div class="setting-line">
+    <label class="field-label" for="setTitle">문서 이름</label>
+    <input id="setTitle" class="input" maxlength="24" value="${esc(S.room.title || "")}">
+  </div>
 
-  <label class="field-label" for="setPassword">비밀번호</label>
-  <input id="setPassword" class="input" type="password" maxlength="20" value="${esc(S.room.password || "")}" placeholder="비워두면 공개문서">
+  <div class="setting-line">
+    <label class="field-label" for="setPassword">비밀번호</label>
+    <input id="setPassword" class="input" type="password" maxlength="20" value="${esc(S.room.password || "")}" placeholder="비워두면 공개문서">
+  </div>
 
-  <label class="field-label" for="setRounds">시트 수</label>
-  <select id="setRounds" class="input">
-    <option value="3">Sheet 3</option>
-    <option value="5">Sheet 5</option>
-    <option value="10">Sheet 10</option>
-    <option value="0">계속</option>
-  </select>
+  <div class="setting-line">
+    <label class="field-label" for="setRounds">시트 수</label>
+    <select id="setRounds" class="input">
+      <option value="3">Sheet 3</option>
+      <option value="5">Sheet 5</option>
+      <option value="10">Sheet 10</option>
+      <option value="0">계속</option>
+    </select>
+  </div>
 </div>
           <div class="side-btns" style="margin-top:8px">
             <button class="btn primary small" onclick="Dalmuti.saveSettings()">저장</button>
@@ -1712,20 +1718,26 @@ function resultRows(list, mode) {
         `
         : `
           <div class="side-title">방 설정</div>
-<div class="room-setting-grid">
-  <label class="field-label" for="setTitle">방 제목</label>
-  <input id="setTitle" class="input" maxlength="24" value="${esc(S.room.title || "")}">
+<div class="room-setting-grid setting-labeled-grid">
+  <div class="setting-line">
+    <label class="field-label" for="setTitle">방 제목</label>
+    <input id="setTitle" class="input" maxlength="24" value="${esc(S.room.title || "")}">
+  </div>
 
-  <label class="field-label" for="setPassword">비밀번호</label>
-  <input id="setPassword" class="input" type="password" maxlength="20" value="${esc(S.room.password || "")}" placeholder="비워두면 공개방">
+  <div class="setting-line">
+    <label class="field-label" for="setPassword">비밀번호</label>
+    <input id="setPassword" class="input" type="password" maxlength="20" value="${esc(S.room.password || "")}" placeholder="비워두면 공개방">
+  </div>
 
-  <label class="field-label" for="setRounds">라운드</label>
-  <select id="setRounds" class="input">
-    <option value="3">3판</option>
-    <option value="5">5판</option>
-    <option value="10">10판</option>
-    <option value="0">무제한</option>
-  </select>
+  <div class="setting-line">
+    <label class="field-label" for="setRounds">라운드</label>
+    <select id="setRounds" class="input">
+      <option value="3">3판</option>
+      <option value="5">5판</option>
+      <option value="10">10판</option>
+      <option value="0">무제한</option>
+    </select>
+  </div>
 </div>
           <div class="side-btns" style="margin-top:8px">
             <button class="btn primary small" onclick="Dalmuti.saveSettings()">저장</button>
