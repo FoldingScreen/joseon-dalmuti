@@ -365,6 +365,44 @@ function basePlayer(uid, nickname, seatOrder, isAI) {
     document.head.appendChild(link);
   }
 
+function injectEnhancementCss() {
+  if ($("dalmutiEnhancementCss")) return;
+
+  const style = document.createElement("style");
+  style.id = "dalmutiEnhancementCss";
+  style.textContent = `
+    .chat-time {
+      display: inline-block;
+      margin-right: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      opacity: .58;
+      white-space: nowrap;
+      vertical-align: baseline;
+    }
+
+    .modal-row.score-cols,
+    .result-row.score-cols {
+      grid-template-columns: .7fr 1.4fr .8fr .8fr 1fr;
+    }
+
+    @media (max-width: 880px) {
+      .chat-time {
+        font-size: 10px;
+        margin-right: 4px;
+      }
+
+      .modal-row.score-cols,
+      .result-row.score-cols {
+        grid-template-columns: .6fr 1.2fr .7fr .7fr .9fr;
+        gap: 4px;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+  
  function ensureModals() {
   if (!$("gameModal")) {
     const m = document.createElement("div");
@@ -1406,6 +1444,30 @@ function formatChatText(text) {
   return esc(text || "");
 }
 
+function formatChatTime(value) {
+  if (!value) return "--:--";
+
+  let ms = 0;
+
+  if (typeof value === "number") {
+    ms = value;
+  } else if (typeof value === "string") {
+    ms = Date.parse(value) || 0;
+  } else if (typeof value.toMillis === "function") {
+    ms = value.toMillis();
+  } else if (typeof value.seconds === "number") {
+    ms = value.seconds * 1000;
+  }
+
+  if (!ms) return "--:--";
+
+  const d = new Date(ms);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+
+  return `${hh}:${mm}`;
+}
+  
   function chatSeenKey() {
     return `dalmuti:${S.roomId || "no-room"}:chatSeenAt:${S.user || "no-user"}`;
   }
@@ -1465,35 +1527,37 @@ function formatChatText(text) {
     }
   }
   
-  function renderChat() {
-    if (!E.chatList) return;
+ function renderChat() {
+  if (!E.chatList) return;
 
-    const office = isOfficeMode();
-    const chatSection = E.chatList.closest("section");
-    const chatTitle = chatSection?.querySelector(".side-title, h2, h3, .panel-title");
+  const office = isOfficeMode();
+  const chatSection = E.chatList.closest("section");
+  const chatTitle = chatSection?.querySelector(".side-title, h2, h3, .panel-title");
 
-    if (chatTitle) {
-      chatTitle.textContent = office ? "검토 메모" : "채팅";
-    }
-
-    const list = (S.room?.chatPreview || []).slice(-CHAT_LIMIT);
-
-    E.chatList.innerHTML = list.length
-      ? list.map(m =>
-          m.type === "system"
-            ? `<div class="chat-msg system">${esc(m.text)}</div>`
-            : `<div class="chat-msg"><span class="chat-name">${esc(m.nickname || "-")}</span> ${formatChatText(m.text || "")}</div>`
-        ).join("")
-      : `<div class="muted">${office ? "검토 메모가 없습니다." : "채팅이 없습니다."}</div>`;
-
-    E.chatList.scrollTop = E.chatList.scrollHeight;
-
-    if (document.body.classList.contains("mobile-chat-open")) {
-      markChatSeen();
-    } else {
-      updateMobileChatBadge();
-    }
+  if (chatTitle) {
+    chatTitle.textContent = office ? "검토 메모" : "채팅";
   }
+
+  const list = (S.room?.chatPreview || []).slice(-CHAT_LIMIT);
+
+  E.chatList.innerHTML = list.length
+    ? list.map(m => {
+        const time = `<span class="chat-time">${formatChatTime(m.createdAt)}</span>`;
+
+        return m.type === "system"
+          ? `<div class="chat-msg system">${time} ${esc(m.text)}</div>`
+          : `<div class="chat-msg">${time} <span class="chat-name">${esc(m.nickname || "-")}</span> ${formatChatText(m.text || "")}</div>`;
+      }).join("")
+    : `<div class="muted">${office ? "검토 메모가 없습니다." : "채팅이 없습니다."}</div>`;
+
+  E.chatList.scrollTop = E.chatList.scrollHeight;
+
+  if (document.body.classList.contains("mobile-chat-open")) {
+    markChatSeen();
+  } else {
+    updateMobileChatBadge();
+  }
+}
 
   function sideBox(id, anchor) {
     let box = $(id);
@@ -1506,9 +1570,45 @@ function formatChatText(text) {
     return box;
   }
 
-  function resultRows(list, mode) {
-    return `<div class="result-row header"><span>순위</span><span>닉네임</span><span>${mode === "final" ? "총점" : "획득"}</span><span>계급</span></div>` + list.map((p, i) => `<div class="result-row"><span>${mode === "final" ? i + 1 : (p.lastRoundRank || p.finishedRank || i + 1)}등</span><span>${esc(p.nickname || "-")}</span><strong>${mode === "final" ? Number(p.score || 0) : `+${Number(p.lastRoundScore || 0)}`}</strong><span>${esc(p.role || "-")}</span></div>`).join("");
+function resultRows(list, mode) {
+  if (mode === "final") {
+    return `
+      <div class="result-row header">
+        <span>순위</span>
+        <span>닉네임</span>
+        <span>총점</span>
+        <span>계급</span>
+      </div>
+      ${list.map((p, i) => `
+        <div class="result-row">
+          <span>${i + 1}등</span>
+          <span>${esc(p.nickname || "-")}</span>
+          <strong>${Number(p.score || 0)}</strong>
+          <span>${esc(p.role || "-")}</span>
+        </div>
+      `).join("")}
+    `;
   }
+
+  return `
+    <div class="result-row header score-cols">
+      <span>순위</span>
+      <span>닉네임</span>
+      <span>획득</span>
+      <span>누적</span>
+      <span>계급</span>
+    </div>
+    ${list.map((p, i) => `
+      <div class="result-row score-cols">
+        <span>${p.lastRoundRank || p.finishedRank || i + 1}등</span>
+        <span>${esc(p.nickname || "-")}</span>
+        <strong>+${Number(p.lastRoundScore || 0)}</strong>
+        <strong>${Number(p.score || 0)}</strong>
+        <span>${esc(p.role || "-")}</span>
+      </div>
+    `).join("")}
+  `;
+}
 
   function renderSide() {
     const side = document.querySelector(".side-panel");
@@ -1853,7 +1953,19 @@ const rawRounds = Number($("modalTotalRoundsSelect")?.value || E.totalRoundsSele
     }, err => { console.error(err); toast("방 정보를 읽지 못했습니다."); });
   }
 
-  function handleKicked() {
+function closeAllOverlays() {
+  $("gameModal")?.classList.remove("show");
+  $("rebellionModal")?.classList.remove("show");
+  $("createRoomModal")?.classList.remove("show");
+
+  document.body.classList.remove(
+    "mobile-menu-open",
+    "mobile-chat-open"
+  );
+}
+  
+function handleKicked() {
+    closeAllOverlays();
     if (S.leavingByKick) return;
     S.leavingByKick = true;
     const roomId = S.roomId;
@@ -1893,7 +2005,8 @@ const rawRounds = Number($("modalTotalRoundsSelect")?.value || E.totalRoundsSele
     S.handUnsub = null;
   }
 
-  function leaveLocal() {
+function leaveLocal() {
+    closeAllOverlays();
     leaveSubscriptions();
     S.room = null;
     S.hand = [];
@@ -2245,53 +2358,122 @@ batch.set(roomRef(), {
     await startRound((S.room.round || 0) + 1, false, forceRebellion);
   }
 
-  function toggleRank(rank) {
-    const mine = me();
-    if (!mine || mine.type !== "player") return;
-    const group = groupHand(S.hand).find(g => Number(g.rank) === Number(rank));
-    if (!group) return;
-    if (S.room?.status === "tributeReturn") {
-      const pair = syncTributeReturnSelection();
+function toggleRank(rank) {
+  const mine = me();
+  if (!mine || mine.type !== "player") return;
 
-      if (!pair) {
-        return toast("반환할 차례가 아닙니다.");
-      }
+  const group = groupHand(S.hand).find(g => Number(g.rank) === Number(rank));
+  if (!group) return;
 
-      const rankNum = Number(group.rank);
-      const required = Number(pair.count || 0);
-      const current = Number(S.tributeReturnSelection.counts.get(rankNum) || 0);
-      const total = tributeReturnSelectedTotal();
-      const maxInStack = Number(group.items.length || 0);
+  if (S.room?.status === "tributeReturn") {
+    const pair = syncTributeReturnSelection();
 
-      if (total < required && current < maxInStack) {
-        S.tributeReturnSelection.counts.set(rankNum, current + 1);
-      } else if (current > 0) {
-        const next = current - 1;
-        if (next > 0) S.tributeReturnSelection.counts.set(rankNum, next);
-        else S.tributeReturnSelection.counts.delete(rankNum);
-      } else {
-        return toast(`${required}장만 선택할 수 있습니다.`);
-      }
-
-      renderHand();
-      return;
+    if (!pair) {
+      return toast("반환할 차례가 아닙니다.");
     }
-    if (S.room?.status !== "playing" || S.room.currentTurnUid !== S.user) return;
-    if (S.room.currentSet) {
-      if (!selectableGroup(group)) return toast("낼 수 없는 계급입니다.");
+
+    const rankNum = Number(group.rank);
+    const required = Number(pair.count || 0);
+    const current = Number(S.tributeReturnSelection.counts.get(rankNum) || 0);
+    const total = tributeReturnSelectedTotal();
+    const maxInStack = Number(group.items.length || 0);
+
+    if (total < required && current < maxInStack) {
+      S.tributeReturnSelection.counts.set(rankNum, current + 1);
+    } else if (current > 0) {
+      const next = current - 1;
+      if (next > 0) S.tributeReturnSelection.counts.set(rankNum, next);
+      else S.tributeReturnSelection.counts.delete(rankNum);
+    } else {
+      return toast(`${required}장만 선택할 수 있습니다.`);
+    }
+
+    renderHand();
+    return;
+  }
+
+  if (S.room?.status !== "playing" || S.room.currentTurnUid !== S.user) return;
+
+  if (S.room.currentSet) {
+    const need = Number(S.room.currentSet.count || 1);
+    const rankNum = Number(group.rank);
+    const jokerGroup = groupHand(S.hand).find(g => Number(g.rank) === 13);
+    const jokerItems = jokerGroup?.items || [];
+
+    // 조커를 누르면 현재 선택된 일반 계급 안에서 조커 사용 개수를 순환
+    if (rankNum === 13) {
+      const selectedNormalEntry = Array.from(S.selected.entries())
+        .find(([r]) => Number(r) !== 13);
+
+      if (!selectedNormalEntry) {
+        return toast("먼저 낼 계급을 선택하세요.");
+      }
+
+      const [selectedRank] = selectedNormalEntry;
+      const selectedGroup = groupHand(S.hand).find(g => Number(g.rank) === Number(selectedRank));
+      if (!selectedGroup) return;
+
+      const normalItems = selectedGroup.items.filter(c => !(c.joker || Number(c.rank) === 13));
+      const maxJokers = Math.min(jokerItems.length, need - 1);
+      const minJokers = Math.max(0, need - normalItems.length);
+
+      if (maxJokers < minJokers) {
+        return toast("조커를 조합할 수 없습니다.");
+      }
+
+      const currentJokers = (S.selected.get(13) || []).length;
+      const nextJokers = currentJokers < maxJokers ? currentJokers + 1 : minJokers;
+      const normalNeed = need - nextJokers;
+
       S.selected.clear();
-      const need = Number(S.room.currentSet.count || 1);
-      const normal = group.items.filter(c => !(c.joker || Number(c.rank) === 13)).slice(0, need);
-      const jokers = S.hand.filter(c => c.joker || Number(c.rank) === 13).slice(0, Math.max(0, need - normal.length));
-      S.selected.set(group.rank, normal.concat(jokers));
+      S.selected.set(Number(selectedRank), normalItems.slice(0, normalNeed));
+
+      if (nextJokers > 0) {
+        S.selected.set(13, jokerItems.slice(0, nextJokers));
+      }
+
       renderHand();
       return;
     }
-const currentSelected = S.selected.get(group.rank) || [];
 
-if (Number(group.rank) === 13) {
+    if (!selectableGroup(group)) return toast("낼 수 없는 계급입니다.");
+
+    const normalItems = group.items.filter(c => !(c.joker || Number(c.rank) === 13));
+    const minJokers = Math.max(0, need - normalItems.length);
+    const normalNeed = need - minJokers;
+
+    S.selected.clear();
+    S.selected.set(rankNum, normalItems.slice(0, normalNeed));
+
+    if (minJokers > 0) {
+      S.selected.set(13, jokerItems.slice(0, minJokers));
+    }
+
+    renderHand();
+    return;
+  }
+
+  const currentSelected = S.selected.get(group.rank) || [];
+
+  if (Number(group.rank) === 13) {
+    if (!currentSelected.length) {
+      S.selected.set(group.rank, group.items.slice());
+    } else if (currentSelected.length > 1) {
+      S.selected.set(group.rank, group.items.slice(0, currentSelected.length - 1));
+    } else {
+      S.selected.delete(group.rank);
+    }
+
+    renderHand();
+    return;
+  }
+
+  const jokers = S.selected.get(13) || [];
+
   if (!currentSelected.length) {
+    S.selected.clear();
     S.selected.set(group.rank, group.items.slice());
+    if (jokers.length) S.selected.set(13, jokers);
   } else if (currentSelected.length > 1) {
     S.selected.set(group.rank, group.items.slice(0, currentSelected.length - 1));
   } else {
@@ -2299,23 +2481,7 @@ if (Number(group.rank) === 13) {
   }
 
   renderHand();
-  return;
 }
-
-const jokers = S.selected.get(13) || [];
-
-if (!currentSelected.length) {
-  S.selected.clear();
-  S.selected.set(group.rank, group.items.slice());
-  if (jokers.length) S.selected.set(13, jokers);
-} else if (currentSelected.length > 1) {
-  S.selected.set(group.rank, group.items.slice(0, currentSelected.length - 1));
-} else {
-  S.selected.delete(group.rank);
-}
-
-renderHand();
-  }
 
   async function playSelected() {
     if (S.actionBusy) return;
@@ -2946,16 +3112,17 @@ async function closeRoomIfNoHuman(roomId = S.roomId, players = playersMap(), spe
     $("gameModal")?.classList.remove("show");
   }
 
-  function modalRows(players, mode) {
-    const office = isOfficeMode();
+function modalRows(players, mode) {
+  const office = isOfficeMode();
 
+  if (mode === "start") {
     const header = office
-      ? `<div class="modal-row header"><span>순번</span><span>담당자</span><span>${mode === "start" ? "점수" : "처리"}</span><span>역할</span></div>`
-      : `<div class="modal-row header"><span>순위</span><span>닉네임</span><span>${mode === "start" ? "점수" : "획득"}</span><span>계급</span></div>`;
+      ? `<div class="modal-row header"><span>순번</span><span>담당자</span><span>점수</span><span>역할</span></div>`
+      : `<div class="modal-row header"><span>순위</span><span>닉네임</span><span>점수</span><span>계급</span></div>`;
 
     return `<div class="modal-table">${header}${players.map((p, i) => {
-      const rankText = mode === "start" ? i + 1 : (p.lastRoundRank || i + 1);
-      const pointText = mode === "start" ? (p.score || 0) : `+${p.lastRoundScore || 0}`;
+      const rankText = i + 1;
+      const pointText = Number(p.score || 0);
       const roleText = office ? officeRoleName(p.role || "-") : (p.role || "-");
 
       return `
@@ -2969,6 +3136,27 @@ async function closeRoomIfNoHuman(roomId = S.roomId, players = playersMap(), spe
     }).join("")}</div>`;
   }
 
+  const header = office
+    ? `<div class="modal-row header score-cols"><span>순번</span><span>담당자</span><span>처리</span><span>누적</span><span>역할</span></div>`
+    : `<div class="modal-row header score-cols"><span>순위</span><span>닉네임</span><span>획득</span><span>누적</span><span>계급</span></div>`;
+
+  return `<div class="modal-table">${header}${players.map((p, i) => {
+    const rankText = p.lastRoundRank || p.finishedRank || i + 1;
+    const gainText = `+${Number(p.lastRoundScore || 0)}`;
+    const totalText = Number(p.score || 0);
+    const roleText = office ? officeRoleName(p.role || "-") : (p.role || "-");
+
+    return `
+      <div class="modal-row score-cols">
+        <span>${office ? rankText : `${rankText}등`}</span>
+        <span>${esc(p.nickname)}</span>
+        <strong>${gainText}</strong>
+        <strong>${totalText}</strong>
+        <span>${esc(roleText)}</span>
+      </div>
+    `;
+  }).join("")}</div>`;
+}
   function maybeStartModal() {
     const room = S.room;
     if (!room || !["playing", "tributeReturn"].includes(room.status) || !room.round) return;
@@ -2991,26 +3179,42 @@ async function closeRoomIfNoHuman(roomId = S.roomId, players = playersMap(), spe
     else show();
   }
 
-  function maybeResultModal() {
-    const room = S.room;
-    if (!room || !["betweenRounds", "finished"].includes(room.status) || !room.lastRoundResult) return;
+function maybeResultModal() {
+  const room = S.room;
+  if (!room || !room.lastRoundResult) return;
 
-    const key = `dalmuti:${S.roomId}:result:${room.lastRoundResult.round}`;
-    if (markSeen(S.seenResult, key)) return;
+  const isFinalResult = !!room.finalGameResult;
+  const canShowResult =
+    ["betweenRounds", "finished"].includes(room.status) ||
+    (isFinalResult && room.status === "waiting");
 
-    const office = isOfficeMode();
+  if (!canShowResult) return;
 
-    const actions = isHost() && room.status === "betweenRounds"
-      ? `<button class="btn primary" onclick="Dalmuti.nextRound()">${office ? "다음 시트 열기" : "다음 라운드 시작"}</button><button class="btn ghost" onclick="Dalmuti.closeModal()">닫기</button>`
-      : `<button class="btn primary" onclick="Dalmuti.closeModal()">확인</button>`;
+  const endedAt = room.lastRoundResult.endedAt;
+  const endedKey = endedAt?.seconds
+    ? `${endedAt.seconds}_${endedAt.nanoseconds || 0}`
+    : String(endedAt || room.updatedAt?.seconds || room.roundKey || Date.now());
 
-    showModal(
-      office ? `${room.lastRoundResult.round}번 시트 처리 결과` : `${room.lastRoundResult.round}라운드 결과`,
-      modalRows(allPlayers().slice().sort((a, b) => (a.lastRoundRank ?? 999) - (b.lastRoundRank ?? 999)), "result"),
-      actions,
-      10000
-    );
-  }
+  const key = `dalmuti:${S.roomId}:result:${room.lastRoundResult.round}:${endedKey}`;
+  if (markSeen(S.seenResult, key)) return;
+
+  const office = isOfficeMode();
+
+  const actions = isHost() && room.status === "betweenRounds"
+    ? `<button class="btn primary" onclick="Dalmuti.nextRound()">${office ? "다음 시트 열기" : "다음 라운드 시작"}</button><button class="btn ghost" onclick="Dalmuti.closeModal()">닫기</button>`
+    : `<button class="btn primary" onclick="Dalmuti.closeModal()">확인</button>`;
+
+  const title = isFinalResult
+    ? (office ? "최종 집계 결과" : "최종 결과")
+    : (office ? `${room.lastRoundResult.round}번 시트 처리 결과` : `${room.lastRoundResult.round}라운드 결과`);
+
+  showModal(
+    title,
+    modalRows(allPlayers().slice().sort((a, b) => (a.lastRoundRank ?? 999) - (b.lastRoundRank ?? 999)), "result"),
+    actions,
+    10000
+  );
+}
 
   function maybeRebellionModal() {
     const n = S.room?.rebellionNotice;
@@ -3179,6 +3383,7 @@ if (E.sendChatBtn) E.sendChatBtn.onclick = sendChat;
 
   async function init() {
     injectCss();
+    injectEnhancementCss();
     collectElements();
     ensureModals();
     S.user = String(localStorage.getItem("partyAppUser") || "").trim();
