@@ -82,7 +82,7 @@
   function installDetachBranding() {
     function cleanTree(root = document.body) {
       if (!root) return;
-      document.title = "달무티";
+      document.title = "달무티 in 조선";
       document.getElementById("homeBtn")?.remove();
     }
 
@@ -92,7 +92,7 @@
       if (!btn || !input || btn.dataset.dalmutiBrandPatch === "1") return;
       btn.dataset.dalmutiBrandPatch = "1";
       btn.addEventListener("click", () => {
-        if (!String(input.value || "").trim()) input.value = "달무티";
+        if (!String(input.value || "").trim()) input.value = "달무티 in 조선";
       }, true);
     }
 
@@ -113,7 +113,7 @@
   installDetachBranding();
 
   const scripts = [
-    "./js/00-config.js?v=20260524-dalmuti4",
+    "./js/00-config.js?v=20260524-dalmuti5",
     "./js/92-presence-messages.js?v=20260518-presence1",
     "./js/88-pass-count-fix.js?v=20260518-passcount1",
     "./js/97-sfx.js?v=20260517-sfx2",
