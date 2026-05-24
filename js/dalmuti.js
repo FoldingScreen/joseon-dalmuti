@@ -476,7 +476,6 @@ function installMainSfx() {
     "./js/00-config.js?v=20260524-dalmuti5",
     "./js/92-presence-messages.js?v=20260518-presence1",
     "./js/88-pass-count-fix.js?v=20260518-passcount1",
-    "./js/97-sfx.js?v=20260517-sfx2",
     "./js/98-hard-remove.js?v=20260517-hardremove1",
     "./js/99-waiting-spectator-passfix.js?v=20260517-watchpass1"
   ];
