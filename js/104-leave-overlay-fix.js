@@ -1,10 +1,9 @@
 (() => {
   "use strict";
 
-  function closeAllOverlays() {
+  function closeRoomOverlays() {
     document.getElementById("gameModal")?.classList.remove("show");
     document.getElementById("rebellionModal")?.classList.remove("show");
-    document.getElementById("createRoomModal")?.classList.remove("show");
     document.getElementById("directResultModal")?.classList.remove("show");
     document.getElementById("roundScoreFixModal")?.classList.remove("show");
 
@@ -12,6 +11,11 @@
       "mobile-menu-open",
       "mobile-chat-open"
     );
+  }
+
+  function closeAllOverlays() {
+    closeRoomOverlays();
+    document.getElementById("createRoomModal")?.classList.remove("show");
   }
 
   function patchLeaveButtons() {
@@ -24,16 +28,6 @@
         closeAllOverlays();
       }, true);
     });
-  }
-
-  function watchRoomExit() {
-    const hasRoom = !!String(localStorage.getItem("dalmutiCurrentRoomId") || "").trim();
-    const roomViewOpen = document.getElementById("roomView")?.classList.contains("show");
-    const lobbyViewOpen = document.getElementById("lobbyView")?.classList.contains("show");
-
-    if (!hasRoom && lobbyViewOpen && !roomViewOpen) {
-      closeAllOverlays();
-    }
   }
 
   function esc(value) {
@@ -72,6 +66,7 @@
 
   let chatRoomId = "";
   let chatUnsub = null;
+  let chatObserver = null;
 
   function watchChatRoom() {
     if (!window.firebase || !firebase.apps.length) return;
@@ -91,6 +86,28 @@
     }, console.error);
   }
 
+  function installChatRoomObserver() {
+    if (chatObserver) return;
+
+    chatObserver = new MutationObserver(() => {
+      patchLeaveButtons();
+      watchChatRoom();
+      if (!String(localStorage.getItem("dalmutiCurrentRoomId") || "").trim()) {
+        if (chatUnsub) chatUnsub();
+        chatUnsub = null;
+        chatRoomId = "";
+        closeRoomOverlays();
+      }
+    });
+
+    chatObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class"]
+    });
+  }
+
   function installChatTimeStyle() {
     if (document.getElementById("chatTimestampFixStyle")) return;
     const style = document.createElement("style");
@@ -100,16 +117,13 @@
   }
 
   window.DalmutiCloseAllOverlays = closeAllOverlays;
+  window.DalmutiCloseRoomOverlays = closeRoomOverlays;
 
   function init() {
     installChatTimeStyle();
     patchLeaveButtons();
     watchChatRoom();
-    setInterval(() => {
-      patchLeaveButtons();
-      watchRoomExit();
-      watchChatRoom();
-    }, 500);
+    installChatRoomObserver();
   }
 
   if (document.readyState === "loading") {
