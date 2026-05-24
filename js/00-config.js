@@ -1227,15 +1227,53 @@ return `
     return (S.room?.tribute?.pairs || []).find(p => p.toUid === S.user && !p.returned) || null;
   }
 
-  function selectableGroup(group) {
-    if (S.room?.status === "tributeReturn") return !!currentTributePairForMe();
-    if (S.room?.status !== "playing" || S.room.currentTurnUid !== S.user) return false;
-    if (!S.room.currentSet) return true;
-    if (Number(group.rank) === 13) return false;
-    const need = Number(S.room.currentSet.count || 1);
-    const jokerCount = S.hand.filter(c => c.joker || Number(c.rank) === 13).length;
-    return group.items.length + jokerCount >= need && Number(group.rank) < Number(S.room.currentSet.effectiveRank);
+function selectableGroup(group) {
+  if (S.room?.status === "tributeReturn") return !!currentTributePairForMe();
+  if (S.room?.status !== "playing" || S.room.currentTurnUid !== S.user) return false;
+
+  if (!S.room.currentSet) return true;
+
+  const need = Number(S.room.currentSet.count || 1);
+  const targetRank = Number(S.room.currentSet.effectiveRank);
+  const rankNum = Number(group.rank);
+  const jokerCount = S.hand.filter(c => c.joker || Number(c.rank) === 13).length;
+
+  // 조커는 단독으로 이기는 카드가 아니라, 낼 수 있는 일반 계급 조합이 있을 때 활성화
+  if (rankNum === 13) {
+    if (!jokerCount) return false;
+
+    const selectedNormalRank = Array.from(S.selected.keys())
+      .find(r => Number(r) !== 13);
+
+    // 이미 일반 계급을 선택한 상태면 조커 전환 가능
+    if (selectedNormalRank) {
+      const selectedGroup = groupHand(S.hand).find(g => Number(g.rank) === Number(selectedNormalRank));
+      if (!selectedGroup) return false;
+
+      return (
+        Number(selectedNormalRank) < targetRank &&
+        selectedGroup.items.length + jokerCount >= need
+      );
+    }
+
+    // 아직 일반 계급을 선택하지 않았더라도,
+    // 조커를 섞어서 낼 수 있는 일반 계급이 있으면 활성화 표시
+    return groupHand(S.hand).some(g => {
+      const r = Number(g.rank);
+      if (r === 13) return false;
+
+      return (
+        r < targetRank &&
+        g.items.length + jokerCount >= need
+      );
+    });
   }
+
+  return (
+    group.items.length + jokerCount >= need &&
+    rankNum < targetRank
+  );
+}
 
   function renderHand() {
     if (!E.handArea) return;
@@ -1880,6 +1918,35 @@ function resultRows(list, mode) {
 
   const addSystem = text => appendChat({ type: "system", text });
 
+async function addSystemOnce(text, key) {
+  if (!S.roomId || !key) return;
+
+  const snap = await roomRef().get();
+  if (!snap.exists) return;
+
+  const latestRoom = snap.data();
+
+  if (latestRoom.lastSystemNoticeKey === key) {
+    return;
+  }
+
+  const chat = (latestRoom.chatPreview || []).slice(-CHAT_LIMIT + 1);
+
+  chat.push({
+    type: "system",
+    uid: "system",
+    nickname: "",
+    text,
+    createdAt: Date.now()
+  });
+
+  await roomRef().set({
+    chatPreview: chat,
+    lastSystemNoticeKey: key,
+    updatedAt: serverNow()
+  }, { merge: true });
+}
+  
 function showCreateRoomModal() {
   const modal = $("createRoomModal");
   if (!modal) return;
@@ -2523,7 +2590,15 @@ function toggleRank(rank) {
       batch.set(roomRef(), finishRoundUpdate(room, players, final), { merge: true });
       if (uid === S.user) S.selected.clear();
       await batch.commit();
-      await addSystem((room.totalRounds && room.round >= room.totalRounds) ? "최종라운드가 종료되었습니다. 최종 점수가 표시됩니다." : `${room.round}라운드가 종료되었습니다.`);
+      const isFinalRound = !!(room.totalRounds && room.round >= room.totalRounds);
+const noticeKey = `roundEnd:${room.round}:${isFinalRound ? "final" : "normal"}`;
+
+await addSystemOnce(
+  isFinalRound
+    ? "최종라운드가 종료되었습니다."
+    : `${room.round}라운드가 종료되었습니다.`,
+  noticeKey
+);
       return;
     }
     const next = nextAfter({ ...room, players }, uid);
@@ -2608,7 +2683,19 @@ function finishRoundUpdate(room, players, final) {
   };
 }
 
-  async function passTurn() { await passAs(S.user); }
+  async function passTurn() {
+  const shouldClearSelection =
+    S.room?.status === "playing" &&
+    S.room.currentTurnUid === S.user &&
+    !!S.room.currentSet;
+
+  await passAs(S.user);
+
+  if (shouldClearSelection) {
+    S.selected.clear();
+    renderHand();
+  }
+}
 
   async function passAs(uid) {
     const room = S.room;
