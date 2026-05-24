@@ -1691,8 +1691,9 @@ function resultRows(list, mode) {
         ? `
           <div class="side-title">문서 설정</div>
           <div class="room-setting-grid">
-            <input id="setTitle" class="input" maxlength="24" value="${esc(S.room.title || "")}">
-            <select id="setRounds" class="input">
+<input id="setTitle" class="input" maxlength="24" value="${esc(S.room.title || "")}">
+<input id="setPassword" class="input" type="password" maxlength="20" value="${esc(S.room.password || "")}" placeholder="방 비밀번호 · 비워두면 공개방">
+<select id="setRounds" class="input">
               <option value="3">Sheet 3</option>
               <option value="5">Sheet 5</option>
               <option value="10">Sheet 10</option>
@@ -1707,8 +1708,9 @@ function resultRows(list, mode) {
         : `
           <div class="side-title">방 설정</div>
           <div class="room-setting-grid">
-            <input id="setTitle" class="input" maxlength="24" value="${esc(S.room.title || "")}">
-            <select id="setRounds" class="input">
+<input id="setTitle" class="input" maxlength="24" value="${esc(S.room.title || "")}">
+<input id="setPassword" class="input" type="password" maxlength="20" value="${esc(S.room.password || "")}" placeholder="방 비밀번호 · 비워두면 공개방">
+<select id="setRounds" class="input">
               <option value="3">3판</option>
               <option value="5">5판</option>
               <option value="10">10판</option>
@@ -3091,13 +3093,23 @@ async function maybeAssignHostIfNeeded() {
     await appendChat({ type: "chat", uid: S.user, nickname: mine?.nickname || S.user, text });
   }
 
-  async function saveSettings() {
-    if (!isHost() || S.room?.status !== "waiting") return;
-    const title = ($("setTitle")?.value || "달무티 in 조선").trim();
-    const raw = Number($("setRounds")?.value || 5);
-    await roomRef().set({ title, totalRounds: raw === 0 ? null : raw, updatedAt: serverNow() }, { merge: true });
-    await addSystem("방 설정이 변경되었습니다.");
-  }
+async function saveSettings() {
+  if (!isHost() || S.room?.status !== "waiting") return;
+
+  const title = ($("setTitle")?.value || "달무티 in 조선").trim();
+  const password = ($("setPassword")?.value || "").trim();
+  const raw = Number($("setRounds")?.value || 5);
+
+  await roomRef().set({
+    title,
+    password,
+    hasPassword: !!password,
+    totalRounds: raw === 0 ? null : raw,
+    updatedAt: serverNow()
+  }, { merge: true });
+
+  await addSystem(password ? "방 설정이 변경되었습니다. 비밀번호가 설정되었습니다." : "방 설정이 변경되었습니다. 비밀번호가 해제되었습니다.");
+}
 
   async function toggleSpectatorChat() {
     if (!isHost()) return;
