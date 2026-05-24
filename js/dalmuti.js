@@ -79,11 +79,41 @@
     else init();
   }
 
+  function installDetachBranding() {
+    function cleanTree(root = document.body) {
+      if (!root) return;
+      document.title = "달무티";
+      document.getElementById("homeBtn")?.remove();
+    }
+
+    function patchCreateRoomDefault() {
+      const btn = document.getElementById("createRoomBtn");
+      const input = document.getElementById("roomTitleInput");
+      if (!btn || !input || btn.dataset.dalmutiBrandPatch === "1") return;
+      btn.dataset.dalmutiBrandPatch = "1";
+      btn.addEventListener("click", () => {
+        if (!String(input.value || "").trim()) input.value = "달무티";
+      }, true);
+    }
+
+    function init() {
+      cleanTree();
+      patchCreateRoomDefault();
+      setTimeout(() => {
+        cleanTree();
+        patchCreateRoomDefault();
+      }, 700);
+    }
+
+    if (document.readyState === "loading") window.addEventListener("DOMContentLoaded", init);
+    else init();
+  }
+
   installNicknameChange();
+  installDetachBranding();
 
   const scripts = [
-    "./js/00-config.js?v=20260524-dalmuti3",
-    "./js/95-detach-branding.js?v=20260518-detach1",
+    "./js/00-config.js?v=20260524-dalmuti4",
     "./js/92-presence-messages.js?v=20260518-presence1",
     "./js/88-pass-count-fix.js?v=20260518-passcount1",
     "./js/97-sfx.js?v=20260517-sfx2",
