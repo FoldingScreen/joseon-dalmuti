@@ -1190,11 +1190,10 @@ installMainSfx();
 installWaitingSpectatorFix();
 installPassCountFix();
 installPresenceMessages();
-installHardRemove();
 
-  const scripts = [
-    "./js/00-config.js?v=20260524-dalmuti5",
-  ];
+const scripts = [
+  "./js/00-config.js?v=20260524-dalmuti11",
+];
 
   document.write(
     scripts
