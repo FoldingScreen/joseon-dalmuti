@@ -1192,7 +1192,7 @@ installPassCountFix();
 installPresenceMessages();
 
 const scripts = [
-  "./js/00-config.js?v=20260524-dalmuti13",
+  "./js/00-config.js?v=20260524-dalmuti14",
 ];
 
   document.write(
