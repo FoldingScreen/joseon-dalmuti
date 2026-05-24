@@ -121,7 +121,127 @@ function installSharedActionSfx() {
   const me = () => String(localStorage.getItem("partyAppUser") || "").trim();
   const muted = () => localStorage.getItem(KEY) === "1";
 
-  function installMainSfx() {
+  function audio() {
+    if (ctx) return ctx;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    ctx = AudioCtx ? new AudioCtx() : null;
+    return ctx;
+  }
+
+  function unlock() {
+    const a = audio();
+    if (!a || unlocked) return;
+    if (a.state === "suspended") a.resume().catch(() => null);
+    unlocked = true;
+  }
+
+  function tone(freq, start, duration, gain) {
+    const a = audio();
+    if (!a || muted() || !unlocked) return;
+
+    const osc = a.createOscillator();
+    const g = a.createGain();
+    const t = a.currentTime + start;
+
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+
+    osc.connect(g);
+    g.connect(a.destination);
+
+    osc.start(t);
+    osc.stop(t + duration + 0.02);
+  }
+
+  function fxSubmit() {
+    tone(90, 0, 0.09, 0.04);
+    tone(650, 0.02, 0.05, 0.015);
+  }
+
+  function fxPass() {
+    tone(145, 0, 0.075, 0.03);
+  }
+
+  function names(selector) {
+    return Array.from(document.querySelectorAll(selector))
+      .map(el => el.querySelector(".player-name")?.textContent?.trim() || "")
+      .filter(Boolean)
+      .sort();
+  }
+
+  function pile() {
+    const center = document.getElementById("centerPile");
+    const title = center?.querySelector?.(".cur-pile-title")?.textContent?.trim() || "";
+    const imgs = Array.from(center?.querySelectorAll?.(".cur-cards img") || [])
+      .map(img => img.src)
+      .join("|");
+
+    return title && imgs ? `${title}::${imgs}` : "";
+  }
+
+  function check() {
+    const mine = me();
+    const submitted = names(".player-box.submitted");
+    const passed = names(".player-box.passed");
+
+    const submitSig = `${pile()}::${submitted.join("|")}`;
+    const passSig = passed.join("|");
+
+    if (!ready) {
+      lastSubmit = submitSig;
+      lastPass = passSig;
+      ready = true;
+      return;
+    }
+
+    if (submitSig && submitSig !== lastSubmit && submitted.some(name => name !== mine)) {
+      fxSubmit();
+    }
+
+    if (passSig !== lastPass) {
+      const old = new Set(lastPass.split("|").filter(Boolean));
+      if (passed.some(name => name !== mine && !old.has(name))) {
+        fxPass();
+      }
+    }
+
+    lastSubmit = submitSig;
+    lastPass = passSig;
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    timer = setTimeout(check, 50);
+  }
+
+  function init() {
+    document.addEventListener("pointerdown", unlock, true);
+
+    const target = document.body;
+    if (!target || target.dataset.sharedActionSfx === "1") return;
+
+    target.dataset.sharedActionSfx = "1";
+
+    new MutationObserver(schedule).observe(target, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class"]
+    });
+
+    setTimeout(check, 300);
+  }
+
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+}
+
+function installMainSfx() {
   const STORAGE_KEY = "dalmutiSfxMuted";
 
   let ctx = null;
@@ -186,149 +306,31 @@ function installSharedActionSfx() {
     osc.stop(t + duration + 0.02);
   }
 
-  function noise(start, duration, gain, opts = {}) {
-    const audio = ensureAudio();
-    if (!audio || isMuted() || !unlocked) return;
+  function play(name) {
+    if (isMuted()) return;
+    unlockAudio();
+    if (!unlocked) return;
 
-    const bufferSize = Math.max(1, Math.floor(audio.sampleRate * duration));
-    const buffer = audio.createBuffer(1, bufferSize, audio.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    let prev = 0;
-    let prev2 = 0;
-
-    const smooth = opts.smooth ?? 0.78;
-    const decay = opts.decay ?? 2.2;
-
-    for (let i = 0; i < bufferSize; i++) {
-      const x = i / bufferSize;
-      const white = Math.random() * 2 - 1;
-      const low = smooth * prev + (1 - smooth) * white;
-      const hp = low - prev2 * (opts.hp ?? 0.72);
-
-      prev = low;
-      prev2 = low;
-
-      data[i] = hp * Math.pow(1 - x, decay);
-    }
-
-    const src = audio.createBufferSource();
-    const g = audio.createGain();
-    const filter = audio.createBiquadFilter();
-    const t = audio.currentTime + start;
-
-    filter.type = opts.type || "bandpass";
-    filter.frequency.value = opts.freq || 1200;
-    filter.Q.value = opts.q || 0.7;
-
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gain), t + 0.002);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
-
-    src.buffer = buffer;
-    src.connect(filter);
-    filter.connect(g);
-    g.connect(audio.destination);
-
-    src.start(t);
-    src.stop(t + duration + 0.02);
-  }
-
-  function paper(start, duration, gain = 0.04, smooth = 0.88) {
-    noise(start, duration, gain, {
-      smooth,
-      freq: 1600,
-      q: 0.55,
-      decay: 1.7
-    });
-  }
-
-  function thump(start, freq = 120, gain = 0.025) {
-    tone(freq, start, 0.075, gain, "sine", freq * 0.75);
-  }
-
-  const SFX = {
-    click() {
-      thump(0, 180, 0.025);
-      noise(0.005, 0.035, 0.035, {
-        freq: 900,
-        smooth: 0.82
-      });
-    },
-
-    ready() {
-      tone(330, 0, 0.08, 0.028, "sine");
-      tone(495, 0.065, 0.09, 0.026, "sine");
-    },
-
-    start() {
+    if (name === "select") tone(480, 0, 0.035, 0.025, "triangle");
+    else if (name === "pass") tone(145, 0, 0.075, 0.03);
+    else if (name === "play") tone(90, 0, 0.09, 0.04);
+    else if (name === "ready") {
+      tone(330, 0, 0.08, 0.028);
+      tone(495, 0.065, 0.09, 0.026);
+    } else if (name === "start") {
       tone(392, 0, 0.08, 0.035, "triangle");
       tone(587, 0.07, 0.08, 0.033, "triangle");
       tone(880, 0.14, 0.10, 0.032, "triangle");
-    },
-
-    select() {
-      tone(480, 0, 0.035, 0.025, "triangle");
-    },
-
-    play() {
-      paper(0, 0.06, 0.08, 0.80);
-      thump(0.018, 90, 0.04);
-      noise(0.045, 0.08, 0.04, {
-        freq: 900,
-        smooth: 0.84
-      });
-    },
-
-    pass() {
-      thump(0, 145, 0.030);
-      noise(0.012, 0.045, 0.025, {
-        freq: 750,
-        smooth: 0.88
-      });
-    },
-
-    tribute() {
-      paper(0, 0.055, 0.045, 0.86);
-      paper(0.045, 0.055, 0.045, 0.86);
-      thump(0.10, 115, 0.020);
-    },
-
-    roundEnd() {
+    } else if (name === "roundEnd") {
       tone(880, 0, 0.08, 0.03, "triangle");
       tone(660, 0.08, 0.08, 0.03, "triangle");
       tone(990, 0.16, 0.13, 0.025, "triangle");
-    },
-
-    rebellion() {
-      noise(0, 0.22, 0.045, {
-        freq: 1100,
-        smooth: 0.72
-      });
-      tone(160, 0, 0.28, 0.055, "sawtooth");
-      tone(220, 0.08, 0.22, 0.045, "sawtooth");
-      tone(330, 0.18, 0.24, 0.04, "square");
-    },
-
-    kick() {
+    } else if (name === "kick") {
       tone(280, 0, 0.06, 0.035, "triangle");
-      tone(180, 0.05, 0.08, 0.03, "sine");
-    },
-
-    error() {
-      tone(440, 0, 0.05, 0.020, "sine");
-      tone(330, 0.04, 0.07, 0.018, "sine");
+      tone(180, 0.05, 0.08, 0.03);
+    } else {
+      tone(180, 0, 0.06, 0.025);
     }
-  };
-
-  function play(name) {
-    if (isMuted()) return;
-
-    unlockAudio();
-
-    if (!unlocked) return;
-
-    SFX[name]?.();
   }
 
   function updateButton() {
@@ -346,7 +348,6 @@ function installSharedActionSfx() {
     if (!target) return;
 
     const btn = document.createElement("button");
-
     btn.id = "sfxToggleBtn";
     btn.type = "button";
     btn.className = "btn ghost";
@@ -375,8 +376,6 @@ function installSharedActionSfx() {
     if (text.includes("패스")) return "pass";
     if (text.includes("강퇴") || text.includes("방 나가기") || text.includes("방 삭제") || text.includes("게임 중지")) return "kick";
     if (text.includes("관전") || text.includes("참가")) return "ready";
-    if (text.includes("AI 추가") || text.includes("저장")) return "click";
-
     return "click";
   }
 
@@ -389,14 +388,12 @@ function installSharedActionSfx() {
       unlockAudio();
 
       const handCard = event.target.closest?.(".hand-stack");
-
       if (handCard) {
         play("select");
         return;
       }
 
       const btn = event.target.closest?.("button");
-
       if (!btn || btn.id === "sfxToggleBtn") return;
 
       play(classifyButton(btn.textContent.trim()));
@@ -415,7 +412,7 @@ function installSharedActionSfx() {
         lastMessageText = message;
 
         if (message.includes("상납")) {
-          play("tribute");
+          play("ready");
         } else if (message.includes("내 차례")) {
           play("ready");
         }
@@ -427,12 +424,11 @@ function installSharedActionSfx() {
         lastSelectedText = selected;
 
         if (selected.includes("낼 수") || selected.includes("선택해야")) {
-          play("error");
+          play("kick");
         }
       }
 
       const chat = document.getElementById("chatList");
-
       const systemText = Array.from(chat?.querySelectorAll?.(".chat-msg.system") || [])
         .map(el => el.textContent.trim())
         .filter(Boolean)
@@ -441,11 +437,7 @@ function installSharedActionSfx() {
       if (systemText && systemText !== lastSystemText) {
         lastSystemText = systemText;
 
-        if (systemText.includes("민란")) {
-          play("rebellion");
-        } else if (systemText.includes("상납")) {
-          play("tribute");
-        } else if (systemText.includes("종료")) {
+        if (systemText.includes("종료")) {
           play("roundEnd");
         } else if (systemText.includes("시작")) {
           play("start");
@@ -466,134 +458,6 @@ function installSharedActionSfx() {
     ensureButton();
     bindClickSounds();
     observeMessages();
-  }
-
-  if (document.readyState === "loading") {
-    window.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
-}
-  
-  function audio() {
-    if (ctx) return ctx;
-
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    ctx = AudioCtx ? new AudioCtx() : null;
-
-    return ctx;
-  }
-
-  function unlock() {
-    const a = audio();
-    if (!a || unlocked) return;
-
-    if (a.state === "suspended") {
-      a.resume().catch(() => null);
-    }
-
-    unlocked = true;
-  }
-
-  function tone(freq, start, duration, gain) {
-    const a = audio();
-    if (!a || muted() || !unlocked) return;
-
-    const osc = a.createOscillator();
-    const g = a.createGain();
-    const t = a.currentTime + start;
-
-    osc.frequency.value = freq;
-
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
-
-    osc.connect(g);
-    g.connect(a.destination);
-
-    osc.start(t);
-    osc.stop(t + duration + 0.02);
-  }
-
-  function fxSubmit() {
-    tone(90, 0, 0.09, 0.04);
-    tone(650, 0.02, 0.05, 0.015);
-  }
-
-  function fxPass() {
-    tone(145, 0, 0.075, 0.03);
-  }
-
-  function names(selector) {
-    return Array.from(document.querySelectorAll(selector))
-      .map(el => el.querySelector(".player-name")?.textContent?.trim() || "")
-      .filter(Boolean)
-      .sort();
-  }
-
-  function pile() {
-    const center = document.getElementById("centerPile");
-    const title = center?.querySelector?.(".cur-pile-title")?.textContent?.trim() || "";
-    const imgs = Array.from(center?.querySelectorAll?.(".cur-cards img") || [])
-      .map(img => img.src)
-      .join("|");
-
-    return title && imgs ? `${title}::${imgs}` : "";
-  }
-
-  function check() {
-    const mine = me();
-    const submitted = names(".player-box.submitted");
-    const passed = names(".player-box.passed");
-
-    const submitSig = `${pile()}::${submitted.join("|")}`;
-    const passSig = passed.join("|");
-
-    if (!ready) {
-      lastSubmit = submitSig;
-      lastPass = passSig;
-      ready = true;
-      return;
-    }
-
-    if (submitSig && submitSig !== lastSubmit && submitted.some(name => name !== mine)) {
-      fxSubmit();
-    }
-
-    if (passSig !== lastPass) {
-      const old = new Set(lastPass.split("|").filter(Boolean));
-
-      if (passed.some(name => name !== mine && !old.has(name))) {
-        fxPass();
-      }
-    }
-
-    lastSubmit = submitSig;
-    lastPass = passSig;
-  }
-
-  function schedule() {
-    clearTimeout(timer);
-    timer = setTimeout(check, 50);
-  }
-
-  function init() {
-    document.addEventListener("pointerdown", unlock, true);
-
-    const target = document.body;
-    if (!target || target.dataset.sharedActionSfx === "1") return;
-
-    target.dataset.sharedActionSfx = "1";
-
-    new MutationObserver(schedule).observe(target, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class"]
-    });
-
-    setTimeout(check, 300);
   }
 
   if (document.readyState === "loading") {
