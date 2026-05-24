@@ -351,7 +351,7 @@ function basePlayer(uid, nickname, seatOrder, isAI) {
   }
 
   function collectElements() {
-    ["lobbyView", "roomView", "myNickname", "roomTitleInput", "totalRoundsSelect", "turnLimitSelect", "roomList", "rankPreview", "roomStateText", "roomTitle", "turnBadge", "messageBar", "lobbyControls", "readyBtn", "watchBtn", "joinAsPlayerBtn", "startBtn", "betweenControls", "nextRoundBtn", "resetGameBtn", "playersArea", "centerPile", "handArea", "selectedSummary", "playControls", "playBtn", "passBtn", "scoreList", "chatList", "chatInput", "sendChatBtn", "toggleSpectatorChatBtn", "homeBtn", "leaveRoomBtn", "createRoomBtn", "refreshRoomsBtn", "toast"].forEach(id => { E[id] = $(id); });
+    ["lobbyView", "roomView", "myNickname", "roomTitleInput", "roomPasswordInput", "totalRoundsSelect", "turnLimitSelect", "roomList", "rankPreview", "roomStateText", "roomTitle", "turnBadge", "messageBar", "lobbyControls", "readyBtn", "watchBtn", "joinAsPlayerBtn", "startBtn", "betweenControls", "nextRoundBtn", "resetGameBtn", "playersArea", "centerPile", "handArea", "selectedSummary", "playControls", "playBtn", "passBtn", "scoreList", "chatList", "chatInput", "sendChatBtn", "toggleSpectatorChatBtn", "homeBtn", "leaveRoomBtn", "createRoomBtn", "refreshRoomsBtn", "toast"].forEach(id => { E[id] = $(id); });
   }
 
   function injectCss() {
@@ -434,6 +434,7 @@ function injectEnhancementCss() {
       <div class="create-room-card">
         <h2>방 만들기</h2>
         <input id="modalRoomTitleInput" class="input" maxlength="24" placeholder="방 제목" value="달무티 in 조선">
+        <input id="modalRoomPasswordInput" class="input" type="password" maxlength="20" placeholder="방 비밀번호 · 비워두면 공개방">
         <select id="modalTotalRoundsSelect" class="input">
           <option value="3">3판</option>
           <option value="5" selected>5판</option>
@@ -755,7 +756,7 @@ async function loadRooms() {
     return `
       <div class="room-item">
         <div>
-          <strong>${esc(r.title || "달무티 in 조선")}</strong>
+          <strong>${r.hasPassword ? "🔒 " : ""}${esc(r.title || "달무티 in 조선")}</strong>
           <div class="room-meta">
             ${status} · 플레이어 ${r.playerCount || 0}/${MAX_PLAYERS} · 관전자 ${r.spectatorCount || 0} · ${r.totalRounds ? `${r.totalRounds}판` : "무제한"}
           </div>
@@ -1952,9 +1953,11 @@ function showCreateRoomModal() {
   if (!modal) return;
 
   const titleInput = $("modalRoomTitleInput");
+  const passwordInput = $("modalRoomPasswordInput");
   const roundsSelect = $("modalTotalRoundsSelect");
 
   if (titleInput) titleInput.value = E.roomTitleInput?.value || "달무티 in 조선";
+  if (passwordInput) passwordInput.value = E.roomPasswordInput?.value || "";
   if (roundsSelect) roundsSelect.value = E.totalRoundsSelect?.value || "5";
 
   modal.classList.add("show");
@@ -1964,40 +1967,106 @@ function closeCreateRoomModal() {
   $("createRoomModal")?.classList.remove("show");
 }
   
-  async function createRoom() {
-const title = (($("modalRoomTitleInput")?.value || E.roomTitleInput?.value || "").trim()) || "달무티 in 조선";
-const rawRounds = Number($("modalTotalRoundsSelect")?.value || E.totalRoundsSelect?.value || 5);
-    const ref = roomCol().doc();
-    const player = basePlayer(S.user, S.user, 0, false);
-    await ref.set({ title, hostUid: S.user, hostNickname: S.user, status: "waiting", round: 0, totalRounds: rawRounds === 0 ? null : rawRounds, players: { [S.user]: player }, spectators: {}, kicked: {}, playerCount: 1, spectatorCount: 0, currentTurnUid: null, currentSet: null, previousSet: null, finishOrder: [], lastRoundResult: null, tribute: null, chatPreview: [], spectatorChatEnabled: true, rebellionNotice: null, closed: false, updatedAt: serverNow(), createdAt: serverNow() });
-    await ref.collection("hands").doc(S.user).set({ hand: [] });
-    closeCreateRoomModal();
-    enterRoom(ref.id);
+async function createRoom() {
+  const title = (($("modalRoomTitleInput")?.value || E.roomTitleInput?.value || "").trim()) || "달무티 in 조선";
+  const password = (($("modalRoomPasswordInput")?.value || E.roomPasswordInput?.value || "").trim());
+  const rawRounds = Number($("modalTotalRoundsSelect")?.value || E.totalRoundsSelect?.value || 5);
+
+  const ref = roomCol().doc();
+  const player = basePlayer(S.user, S.user, 0, false);
+
+  await ref.set({
+    title,
+    password,
+    hasPassword: !!password,
+    hostUid: S.user,
+    hostNickname: S.user,
+    status: "waiting",
+    round: 0,
+    totalRounds: rawRounds === 0 ? null : rawRounds,
+    players: { [S.user]: player },
+    spectators: {},
+    kicked: {},
+    playerCount: 1,
+    spectatorCount: 0,
+    currentTurnUid: null,
+    currentSet: null,
+    previousSet: null,
+    finishOrder: [],
+    lastRoundResult: null,
+    tribute: null,
+    chatPreview: [],
+    spectatorChatEnabled: true,
+    rebellionNotice: null,
+    closed: false,
+    updatedAt: serverNow(),
+    createdAt: serverNow()
+  });
+
+  await ref.collection("hands").doc(S.user).set({ hand: [] });
+
+  closeCreateRoomModal();
+  enterRoom(ref.id);
+}
+async function joinRoom(roomId) {
+  if (S.roomId && S.roomId !== roomId) leaveSubscriptions();
+
+  const snap = await roomRef(roomId).get();
+
+  if (!snap.exists || snap.data().closed || snap.data().status === "closed") {
+    return toast("삭제된 방입니다.");
   }
 
-  async function joinRoom(roomId) {
-    if (S.roomId && S.roomId !== roomId) leaveSubscriptions();
-    const snap = await roomRef(roomId).get();
-    if (!snap.exists || snap.data().closed || snap.data().status === "closed") return toast("삭제된 방입니다.");
-    const room = snap.data();
-    const players = playersMap(room);
-    const specs = spectatorsMap(room);
-    const kicked = kickedMap(room);
-    if (kicked[S.user]) delete kicked[S.user];
-    if (!players[S.user] && !specs[S.user]) {
-      if (room.status === "waiting" && countMap(players) < MAX_PLAYERS) {
-        players[S.user] = basePlayer(S.user, S.user, countMap(players), false);
-        await roomRef(roomId).set({ players, kicked, playerCount: countMap(players), updatedAt: serverNow() }, { merge: true });
-        await handRef(S.user, roomId).set({ hand: [] }, { merge: true });
-      } else {
-        specs[S.user] = baseSpectator(S.user, S.user);
-        await roomRef(roomId).set({ spectators: specs, kicked, spectatorCount: countMap(specs), updatedAt: serverNow() }, { merge: true });
-      }
-    } else if (room.kicked?.[S.user]) {
-      await roomRef(roomId).set({ kicked, updatedAt: serverNow() }, { merge: true });
+  const room = snap.data();
+  const players = playersMap(room);
+  const specs = spectatorsMap(room);
+  const kicked = kickedMap(room);
+
+  const alreadyInRoom = !!players[S.user] || !!specs[S.user];
+
+  if (!alreadyInRoom && room.hasPassword) {
+    const input = window.prompt("방 비밀번호를 입력하세요.");
+
+    if (String(input || "").trim() !== String(room.password || "")) {
+      toast("비밀번호가 틀렸습니다.");
+      return;
     }
-    enterRoom(roomId);
   }
+
+  // 강퇴 기록은 재입장 차단용으로 쓰지 않음
+  if (kicked[S.user]) delete kicked[S.user];
+
+  if (!players[S.user] && !specs[S.user]) {
+    if (room.status === "waiting" && countMap(players) < MAX_PLAYERS) {
+      players[S.user] = basePlayer(S.user, S.user, countMap(players), false);
+
+      await roomRef(roomId).set({
+        players,
+        kicked,
+        playerCount: countMap(players),
+        updatedAt: serverNow()
+      }, { merge: true });
+
+      await handRef(S.user, roomId).set({ hand: [] }, { merge: true });
+    } else {
+      specs[S.user] = baseSpectator(S.user, S.user);
+
+      await roomRef(roomId).set({
+        spectators: specs,
+        kicked,
+        spectatorCount: countMap(specs),
+        updatedAt: serverNow()
+      }, { merge: true });
+    }
+  } else if (room.kicked?.[S.user]) {
+    await roomRef(roomId).set({
+      kicked,
+      updatedAt: serverNow()
+    }, { merge: true });
+  }
+
+  enterRoom(roomId);
+}
 
   function enterRoom(roomId) {
     leaveSubscriptions();
@@ -2193,7 +2262,7 @@ async function toggleAutoPlay() {
 }
   
 async function becomeSpectator() {
-  if (!S.room || S.room.status !== "waiting" || kickedMap()[S.user]) return;
+  if (!S.room || S.room.status !== "waiting") return;
 
   const players = playersMap();
   const specs = spectatorsMap();
@@ -2276,10 +2345,6 @@ async function forceSpectator(uid) {
 async function becomePlayer() {
   if (!S.room || S.room.status !== "waiting") {
     return toast("대기 중에만 참가할 수 있습니다.");
-  }
-
-  if (kickedMap()[S.user]) {
-    return toast("로비에서 다시 입장해 주세요.");
   }
 
   const players = playersMap();
