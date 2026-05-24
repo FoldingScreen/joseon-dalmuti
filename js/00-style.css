@@ -2423,3 +2423,39 @@ body.office-mode .chat-name::before{
 body.office-mode .chat-name::after{
   content:":"!important;
 }
+
+.setting-labeled-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.setting-line {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-line .field-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(231, 236, 246, .78);
+  white-space: nowrap;
+}
+
+.setting-line .input {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .setting-line {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .setting-line .field-label {
+    font-size: 11px;
+  }
+}
