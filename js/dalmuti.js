@@ -31,12 +31,61 @@
     .player-box.ready .badge.ready { background: rgba(111, 179, 255, .16) !important; border: 1px solid rgba(111, 179, 255, .75) !important; color: #9fcaff !important; }
   `);
 
+  function installNicknameChange() {
+    const currentName = () => String(localStorage.getItem("partyAppUser") || localStorage.getItem("dalmutiGuestNickname") || "").trim();
+    const isInRoomView = () => document.getElementById("roomView")?.classList.contains("show");
+    const normalizeName = value => String(value || "").trim().replace(/\s+/g, " ").slice(0, 12);
+
+    function changeNickname() {
+      if (isInRoomView()) {
+        alert("방 안에서는 닉네임을 바꿀 수 없습니다. 방에서 나온 뒤 변경해 주세요.");
+        return;
+      }
+
+      const oldName = currentName();
+      const next = normalizeName(window.prompt("새 닉네임을 입력하세요", oldName));
+      if (!next || next === oldName) return;
+
+      localStorage.setItem("partyAppUser", next);
+      localStorage.setItem("dalmutiGuestNickname", next);
+      localStorage.setItem("dalmutiGuestMode", "true");
+      localStorage.removeItem("dalmutiCurrentRoomId");
+
+      const nameEl = document.getElementById("myNickname");
+      if (nameEl) nameEl.textContent = next;
+
+      location.reload();
+    }
+
+    function init() {
+      addStyle("dalmutiNicknameChangeCss", `
+        .nickname-change-btn { margin-top: 8px; padding: 5px 9px; border: 1px solid rgba(243,210,129,.45); border-radius: 999px; background: rgba(243,210,129,.12); color: #f3d281; font-size: 12px; font-weight: 900; cursor: pointer; }
+        .nickname-change-btn:hover { background: rgba(243,210,129,.22); }
+      `);
+
+      const box = document.querySelector(".profile-box");
+      if (!box || document.getElementById("changeNicknameBtn")) return;
+
+      const btn = document.createElement("button");
+      btn.id = "changeNicknameBtn";
+      btn.type = "button";
+      btn.className = "nickname-change-btn";
+      btn.textContent = "닉네임 변경";
+      btn.addEventListener("click", changeNickname);
+      box.appendChild(btn);
+    }
+
+    if (document.readyState === "loading") window.addEventListener("DOMContentLoaded", init);
+    else init();
+  }
+
+  installNicknameChange();
+
   const scripts = [
-    "./js/00-config.js?v=20260524-dalmuti2",
+    "./js/00-config.js?v=20260524-dalmuti3",
     "./js/95-detach-branding.js?v=20260518-detach1",
     "./js/92-presence-messages.js?v=20260518-presence1",
     "./js/88-pass-count-fix.js?v=20260518-passcount1",
-    "./js/83-nickname-change.js?v=20260518-nick1",
     "./js/97-sfx.js?v=20260517-sfx2",
     "./js/96-shared-action-sfx.js?v=20260517-sharedaction1",
     "./js/98-hard-remove.js?v=20260517-hardremove1",
