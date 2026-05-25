@@ -3306,40 +3306,6 @@ async function joinRoom(roomId) {
   enterRoom(roomId);
 }
 
-  // 강퇴 기록은 재입장 차단용으로 쓰지 않음
-  if (kicked[S.user]) delete kicked[S.user];
-
-  if (!players[S.user] && !specs[S.user]) {
-    if (room.status === "waiting" && countMap(players) < MAX_PLAYERS) {
-      players[S.user] = basePlayer(S.user, S.user, countMap(players), false);
-
-      await roomRef(roomId).set({
-        players,
-        kicked,
-        playerCount: countMap(players),
-        updatedAt: serverNow()
-      }, { merge: true });
-
-      await handRef(S.user, roomId).set({ hand: [] }, { merge: true });
-    } else {
-      specs[S.user] = baseSpectator(S.user, S.user);
-
-      await roomRef(roomId).set({
-        spectators: specs,
-        kicked,
-        spectatorCount: countMap(specs),
-        updatedAt: serverNow()
-      }, { merge: true });
-    }
-  } else if (room.kicked?.[S.user]) {
-    await roomRef(roomId).set({
-      kicked,
-      updatedAt: serverNow()
-    }, { merge: true });
-  }
-
-  enterRoom(roomId);
-}
 
   function enterRoom(roomId) {
     leaveSubscriptions();
