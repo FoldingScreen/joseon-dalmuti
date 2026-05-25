@@ -1247,6 +1247,7 @@ const RANKS = [
     seenRebellion: new Set(),
     aiLocks: new Set(),
     tributeAnimKeys: new Set(),
+    dismissedNoticeKeys: new Set(),
     actionBusy: false,
     hostAssigning: false,
     leavingByKick: false
@@ -1553,6 +1554,31 @@ function basePlayer(uid, nickname, seatOrder, isAI) {
     return false;
   }
 
+function noticeDismissKey(type) {
+  const roomId = S.roomId || "no-room";
+  const round = S.room?.round || 0;
+  const stamp =
+    S.room?.tribute?.returnStartedAt?.seconds ||
+    S.room?.rebellionNotice?.createdAt?.seconds ||
+    S.room?.updatedAt?.seconds ||
+    "";
+
+  return `dalmuti:${roomId}:dismiss:${type}:${round}:${stamp}`;
+}
+
+function isNoticeDismissed(key) {
+  return !!key && (
+    S.dismissedNoticeKeys.has(key) ||
+    sessionStorage.getItem(key) === "1"
+  );
+}
+
+function dismissNotice(key) {
+  if (!key) return;
+  S.dismissedNoticeKeys.add(key);
+  sessionStorage.setItem(key, "1");
+}
+  
   function collectElements() {
     ["lobbyView", "roomView", "myNickname", "roomTitleInput", "roomPasswordInput", "totalRoundsSelect", "turnLimitSelect", "roomList", "rankPreview", "roomStateText", "roomTitle", "turnBadge", "messageBar", "lobbyControls", "readyBtn", "watchBtn", "joinAsPlayerBtn", "startBtn", "betweenControls", "nextRoundBtn", "resetGameBtn", "playersArea", "centerPile", "handArea", "selectedSummary", "playControls", "playBtn", "passBtn", "scoreList", "chatList", "chatInput", "sendChatBtn", "toggleSpectatorChatBtn", "homeBtn", "leaveRoomBtn", "createRoomBtn", "refreshRoomsBtn", "toast"].forEach(id => { E[id] = $(id); });
   }
@@ -3052,27 +3078,64 @@ function resultRows(list, mode) {
       : `<div class="side-title">관리</div><div class="side-btns">${aiBtn}${forceBtn}${stopBtn}${delBtn}<button class="btn ghost small" onclick="Dalmuti.showHelp()">게임 방법</button></div>`;
   }
 
-  function renderTribute() {
-    const panel = $("tributePanel");
-    if (!panel) return;
-    if (!S.room || S.room.status !== "tributeReturn" || !S.room.tribute) {
-      panel.style.display = "none";
-      return;
-    }
-    const pairs = S.room.tribute.pairs || [];
-    const incoming = pairs.filter(p => p.toUid === S.user);
-    const outgoing = pairs.filter(p => p.fromUid === S.user);
-    if (!incoming.length && !outgoing.length) {
-      panel.style.display = "none";
-      return;
-    }
-    const list = [];
-    outgoing.forEach(p => list.push(`<div><div class="tribute-title">내가 상납한 카드</div><div class="tribute-line">${esc(p.toNickname)}님에게 ${p.count}장 상납</div><div class="tribute-cards">${(p.cards || []).map(c => `<img src="${cardImg(c.rank)}">`).join("")}</div></div>`));
-    incoming.forEach(p => list.push(`<div><div class="tribute-title">상납받은 카드</div><div class="tribute-line">${esc(p.fromNickname)}님에게서 ${p.count}장 받음 · ${p.returned ? "반환 완료" : "돌려줄 카드 선택"}</div><div class="tribute-cards">${(p.cards || []).map(c => `<img src="${cardImg(c.rank)}">`).join("")}</div></div>`));
-    panel.innerHTML = list.join("");
-    panel.style.display = "block";
-    runTributeAnimations();
+ function renderTribute() {
+  const panel = $("tributePanel");
+  if (!panel) return;
+
+  const key = noticeDismissKey("tribute");
+
+  if (!S.room || S.room.status !== "tributeReturn" || !S.room.tribute || isNoticeDismissed(key)) {
+    panel.style.display = "none";
+    panel.onclick = null;
+    return;
   }
+
+  const pairs = S.room.tribute.pairs || [];
+  const incoming = pairs.filter(p => p.toUid === S.user);
+  const outgoing = pairs.filter(p => p.fromUid === S.user);
+
+  if (!incoming.length && !outgoing.length) {
+    panel.style.display = "none";
+    panel.onclick = null;
+    return;
+  }
+
+  const list = [];
+
+  outgoing.forEach(p => {
+    list.push(`
+      <div>
+        <div class="tribute-title">내가 상납한 카드</div>
+        <div class="tribute-line">${esc(p.toNickname)}님에게 ${p.count}장 상납</div>
+        <div class="tribute-cards">${(p.cards || []).map(c => `<img src="${cardImg(c.rank)}">`).join("")}</div>
+      </div>
+    `);
+  });
+
+  incoming.forEach(p => {
+    list.push(`
+      <div>
+        <div class="tribute-title">상납받은 카드</div>
+        <div class="tribute-line">${esc(p.fromNickname)}님에게서 ${p.count}장 받음 · ${p.returned ? "반환 완료" : "돌려줄 카드 선택"}</div>
+        <div class="tribute-cards">${(p.cards || []).map(c => `<img src="${cardImg(c.rank)}">`).join("")}</div>
+      </div>
+    `);
+  });
+
+  panel.innerHTML = `
+    <div class="tribute-close-hint">클릭하면 닫힙니다</div>
+    ${list.join("")}
+  `;
+
+  panel.style.display = "block";
+
+  panel.onclick = () => {
+    dismissNotice(key);
+    panel.style.display = "none";
+  };
+
+  runTributeAnimations();
+}
 
   function playerBoxByUid(uid) {
     const p = playersMap()[uid];
@@ -3349,6 +3412,27 @@ function closeAllOverlays() {
     "mobile-chat-open"
   );
 }
+
+function bindNoticeModalDismiss() {
+  const gameModal = $("gameModal");
+  const rebellionModal = $("rebellionModal");
+
+  [gameModal, rebellionModal].forEach(modal => {
+    if (!modal || modal.dataset.clickDismissBound === "1") return;
+
+    modal.dataset.clickDismissBound = "1";
+
+    modal.addEventListener("click", event => {
+      if (event.target.closest("button, input, select, textarea, a")) return;
+
+      if (modal.id === "gameModal") {
+        closeModal();
+      } else {
+        modal.classList.remove("show");
+      }
+    });
+  });
+}  
   
 function handleKicked() {
     closeAllOverlays();
@@ -3958,20 +4042,22 @@ function finishRoundUpdate(room, players, final) {
       lastRoundRank: p.lastRoundRank || null
     }));
 
-  if (isFinalRound) {
-    Object.keys(players).forEach(uid => {
-      players[uid] = {
-        ...players[uid],
-        isReady: !!players[uid].isAI,
-        role: null,
-        cardCount: 0,
-        passed: false,
-        finished: false,
-        finishedRank: null,
-        forfeited: false
-      };
-    });
-  }
+if (isFinalRound) {
+  Object.keys(players).forEach(uid => {
+    const autoReady = !!players[uid].isAI || !!players[uid].autoPlay;
+
+    players[uid] = {
+      ...players[uid],
+      isReady: autoReady,
+      role: null,
+      cardCount: 0,
+      passed: false,
+      finished: false,
+      finishedRank: null,
+      forfeited: false
+    };
+  });
+}
 
   return {
     players,
@@ -4183,6 +4269,19 @@ async function returnTribute(uid, cards, hand) {
   return nonJokers.slice(-count).concat(jokers).slice(0, count);
 };
 
+function acquireAiLock(key, ms = 5000) {
+  if (!key) return false;
+  if (S.aiLocks.has(key)) return false;
+
+  S.aiLocks.add(key);
+
+  setTimeout(() => {
+    S.aiLocks.delete(key);
+  }, ms);
+
+  return true;
+}
+  
 async function maybeClientTasks() {
   await maybeAssignHostIfNeeded();
 
@@ -4215,8 +4314,7 @@ async function maybeAutoHostStart() {
     if (!allReady) return;
 
     const key = `${S.roomId}:autostart:waiting:${room.updatedAt?.seconds || 0}_${room.updatedAt?.nanoseconds || 0}:${ps.length}`;
-    if (S.aiLocks.has(key)) return;
-    S.aiLocks.add(key);
+if (!acquireAiLock(key, 5000)) return;
 
     await startGame();
     return;
@@ -4225,8 +4323,7 @@ async function maybeAutoHostStart() {
   // 라운드 종료 후 자동 다음 라운드 시작
   if (room.status === "betweenRounds") {
     const key = `${S.roomId}:autostart:next:${room.round}:${room.updatedAt?.seconds || 0}_${room.updatedAt?.nanoseconds || 0}`;
-    if (S.aiLocks.has(key)) return;
-    S.aiLocks.add(key);
+if (!acquireAiLock(key, 5000)) return;
 
     await nextRound(false);
   }
@@ -4242,8 +4339,7 @@ async function maybeAutoHostStart() {
       });
       if (!pair) return;
       const key = `${S.roomId}:tribute:${room.round}:${pair.id}`;
-      if (S.aiLocks.has(key)) return;
-      S.aiLocks.add(key);
+if (!acquireAiLock(key, 5000)) return;
       setTimeout(async () => {
         const snap = await roomRef().get();
         if (!snap.exists) return;
@@ -4263,8 +4359,7 @@ async function maybeAutoHostStart() {
     if (!(ai?.isAI || ai?.autoPlay) || ai.finished || ai.forfeited) return;
     const stamp = room.updatedAt ? `${room.updatedAt.seconds || 0}_${room.updatedAt.nanoseconds || 0}` : Date.now();
     const key = `${S.roomId}:ai:${room.round}:${ai.uid}:${room.currentSet?.uid || "new"}:${stamp}`;
-    if (S.aiLocks.has(key)) return;
-    S.aiLocks.add(key);
+if (!acquireAiLock(key, 5000)) return;
     setTimeout(async () => {
       const snap = await roomRef().get();
       if (!snap.exists) return;
@@ -4884,6 +4979,7 @@ if (E.sendChatBtn) E.sendChatBtn.onclick = sendChat;
     injectEnhancementCss();
     collectElements();
     ensureModals();
+    bindNoticeModalDismiss();
     S.user = String(localStorage.getItem("partyAppUser") || "").trim();
     if (!S.user) return alert("닉네임을 입력하세요.");
     if (E.myNickname) E.myNickname.textContent = S.user;
