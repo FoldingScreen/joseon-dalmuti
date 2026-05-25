@@ -1267,9 +1267,19 @@ const RANKS = [
   const playersMap = (room = S.room) => cleanMap(room?.players);
   const spectatorsMap = (room = S.room) => cleanMap(room?.spectators);
   const kickedMap = (room = S.room) => cleanMap(room?.kicked);
-  const allPlayers = (room = S.room) => Object.values(playersMap(room)).filter(p => p && p.uid && !p.removedFromRoom).sort((a, b) => (a.seatOrder ?? 999) - (b.seatOrder ?? 999));
+  const allPlayers = (room = S.room) => {
+  const kicked = kickedMap(room);
+  return Object.values(playersMap(room))
+    .filter(p => p && p.uid && !p.removedFromRoom && !kicked[p.uid])
+    .sort((a, b) => (a.seatOrder ?? 999) - (b.seatOrder ?? 999));
+};
   const activePlayers = (room = S.room) => allPlayers(room).filter(p => !p.finished && !p.forfeited && !p.removedFromRoom);
-  const spectators = (room = S.room) => Object.values(spectatorsMap(room)).filter(p => p && p.uid && !p.removedFromRoom).sort((a, b) => String(a.nickname || "").localeCompare(String(b.nickname || ""), "ko"));
+  const spectators = (room = S.room) => {
+  const kicked = kickedMap(room);
+  return Object.values(spectatorsMap(room))
+    .filter(p => p && p.uid && !p.removedFromRoom && !kicked[p.uid])
+    .sort((a, b) => String(a.nickname || "").localeCompare(String(b.nickname || ""), "ko"));
+};
   const me = (room = S.room) => playersMap(room)[S.user] || spectatorsMap(room)[S.user] || null;
   const isHost = (room = S.room) => room?.hostUid === S.user;
   const isMaster = () => S.user === MASTER;
