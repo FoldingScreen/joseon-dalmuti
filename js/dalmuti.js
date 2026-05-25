@@ -3296,13 +3296,24 @@ async function joinRoom(roomId) {
         leaveLocal();
         return;
       }
-      S.room = snap.data();
-      if (kickedMap()[S.user]) {
-        handleKicked();
-        return;
-      }
-      renderEverything();
-      ensureMyHandSubscription();
+S.room = snap.data();
+
+const players = playersMap(S.room);
+const specs = spectatorsMap(S.room);
+const kicked = kickedMap(S.room);
+
+if (kicked[S.user]) {
+  handleKicked();
+  return;
+}
+
+if (!players[S.user] && !specs[S.user]) {
+  handleKicked();
+  return;
+}
+
+renderEverything();
+ensureMyHandSubscription();
     }, err => { console.error(err); toast("방 정보를 읽지 못했습니다."); });
   }
 
@@ -4331,80 +4342,166 @@ async function saveSettings() {
     await roomRef().set({ spectatorChatEnabled: S.room?.spectatorChatEnabled === false, updatedAt: serverNow() }, { merge: true });
   }
 
-  async function kick(uid) {
-    if (uid === S.user || !S.roomId) return;
-    const latestSnap = await roomRef().get();
-    if (!latestSnap.exists) return toast("방 정보를 찾을 수 없습니다.");
-    const room = latestSnap.data();
-    if (!(room.hostUid === S.user || isMaster())) return toast("방장만 강퇴할 수 있습니다.");
+async function kick(uid) {
+  if (uid === S.user || !S.roomId) return;
 
-    const players = playersMap(room);
-    const specs = spectatorsMap(room);
-    const kicked = kickedMap(room);
-    const target = players[uid] || specs[uid];
-    if (!target) return toast("이미 방에 없는 대상입니다.");
-    if (!confirm(`${target.nickname || uid}님을 방에서 내보낼까요?`)) return;
+  const latestSnap = await roomRef().get();
 
-    const oldRoom = { ...room, players: { ...players }, spectators: { ...specs } };
-    if (players[uid]) delete players[uid];
-    if (specs[uid]) delete specs[uid];
-    kicked[uid] = { uid, nickname: target.nickname || uid, by: S.user, at: Date.now() };
-
-    let currentTurnUid = room.currentTurnUid;
-    let currentSet = room.currentSet || null;
-    let previousSet = room.previousSet || null;
-    let tribute = room.tribute || null;
-
-    if (currentTurnUid === uid) currentTurnUid = nextAfterKick(oldRoom, uid, players);
-    if (currentSet?.uid === uid) {
-      previousSet = currentSet;
-      currentSet = null;
-      currentTurnUid = nextAfterKick(oldRoom, uid, players);
-    }
-    if (tribute?.pairs) {
-      const pairs = tribute.pairs
-        .filter(p => p.fromUid !== uid && p.toUid !== uid)
-        .map(p => ({ ...p }));
-      tribute = pairs.length ? { ...tribute, pairs } : null;
-    }
-
-    const finishOrder = (room.finishOrder || []).filter(x => x.uid !== uid);
-    const update = { players, spectators: specs, kicked, playerCount: countMap(players), spectatorCount: countMap(specs), currentTurnUid, currentSet, previousSet, tribute, finishOrder, updatedAt: serverNow() };
-    if (!hasHumanInRoom(players, specs)) {
-  const batch = db.batch();
-  batch.set(roomRef(), {
-    closed: true,
-    status: "closed",
-    players: {},
-    spectators: {},
-    kicked,
-    playerCount: 0,
-    spectatorCount: 0,
-    currentTurnUid: null,
-    currentSet: null,
-    previousSet: null,
-    tribute: null,
-    finishOrder: [],
-    updatedAt: serverNow()
-  }, { merge: true });
-  batch.delete(handRef(uid));
-  await batch.commit();
-  await clearSubcollection(roomRef().collection("hands")).catch(() => null);
-  return;
-}
-    const alive = Object.values(players).filter(p => p && !p.finished && !p.forfeited && !p.removedFromRoom);
-    if (["playing", "tributeReturn"].includes(room.status) && alive.length <= 1) {
-      const final = finishOrder.slice();
-      if (alive[0]) final.push({ uid: alive[0].uid, nickname: alive[0].nickname, rank: final.length + 1, finishedAt: ts() });
-      Object.assign(update, finishRoundUpdate({ ...room, tribute }, players, final));
-    }
-
-    const batch = db.batch();
-    batch.set(roomRef(), update, { merge: true });
-    batch.delete(handRef(uid));
-    await batch.commit();
-    await appendSystemFrom({ ...room, chatPreview: room.chatPreview || [] }, `${target.nickname || uid}님이 방장에 의해 강퇴되었습니다.`);
+  if (!latestSnap.exists) {
+    return toast("방 정보를 찾을 수 없습니다.");
   }
+
+  const room = latestSnap.data();
+
+  if (!(room.hostUid === S.user || isMaster())) {
+    return toast("방장만 강퇴할 수 있습니다.");
+  }
+
+  const players = playersMap(room);
+  const specs = spectatorsMap(room);
+  const kicked = kickedMap(room);
+  const target = players[uid] || specs[uid];
+
+  if (!target) {
+    return toast("이미 방에 없는 대상입니다.");
+  }
+
+  if (!confirm(`${target.nickname || uid}님을 방에서 내보낼까요?`)) return;
+
+  const oldRoom = {
+    ...room,
+    players: { ...players },
+    spectators: { ...specs }
+  };
+
+  delete players[uid];
+  delete specs[uid];
+
+  kicked[uid] = {
+    uid,
+    nickname: target.nickname || uid,
+    by: S.user,
+    at: Date.now()
+  };
+
+  let currentTurnUid = room.currentTurnUid || null;
+  let currentSet = room.currentSet || null;
+  let previousSet = room.previousSet || null;
+  let tribute = room.tribute || null;
+
+  if (currentTurnUid === uid) {
+    currentTurnUid = nextAfterKick(oldRoom, uid, players);
+  }
+
+  if (currentSet?.uid === uid) {
+    previousSet = currentSet;
+    currentSet = null;
+    currentTurnUid = nextAfterKick(oldRoom, uid, players);
+  }
+
+  if (tribute?.pairs) {
+    const pairs = tribute.pairs
+      .filter(p => p.fromUid !== uid && p.toUid !== uid)
+      .map(p => ({ ...p }));
+
+    tribute = pairs.length ? { ...tribute, pairs } : null;
+  }
+
+  const finishOrder = (room.finishOrder || []).filter(x => x.uid !== uid);
+
+  const chatPreview = (room.chatPreview || []).slice(-CHAT_LIMIT + 1);
+
+  chatPreview.push({
+    type: "system",
+    uid: "system",
+    nickname: "",
+    text: `${target.nickname || uid}님이 방장에 의해 강퇴되었습니다.`,
+    createdAt: Date.now()
+  });
+
+  const update = {
+    players,
+    spectators: specs,
+    kicked,
+    playerCount: countMap(players),
+    spectatorCount: countMap(specs),
+    currentTurnUid,
+    currentSet,
+    previousSet,
+    tribute,
+    finishOrder,
+    chatPreview,
+    updatedAt: serverNow()
+  };
+
+  if (room.hostUid === uid) {
+    const nextHost =
+      Object.values(players).find(p => p && !p.isAI && !p.removedFromRoom) ||
+      Object.values(specs).find(p => p && !p.isAI && !p.removedFromRoom);
+
+    if (nextHost) {
+      update.hostUid = nextHost.uid;
+      update.hostNickname = nextHost.nickname || nextHost.uid;
+    } else {
+      update.closed = true;
+      update.status = "closed";
+    }
+  }
+
+  if (!hasHumanInRoom(players, specs)) {
+    const batch = db.batch();
+
+    batch.set(roomRef(), {
+      closed: true,
+      status: "closed",
+      players: {},
+      spectators: {},
+      kicked,
+      playerCount: 0,
+      spectatorCount: 0,
+      currentTurnUid: null,
+      currentSet: null,
+      previousSet: null,
+      tribute: null,
+      finishOrder: [],
+      chatPreview,
+      updatedAt: serverNow()
+    }, { merge: true });
+
+    batch.delete(handRef(uid));
+
+    await batch.commit();
+    await clearSubcollection(roomRef().collection("hands")).catch(() => null);
+    return;
+  }
+
+  const alive = Object.values(players).filter(p =>
+    p && !p.finished && !p.forfeited && !p.removedFromRoom
+  );
+
+  if (["playing", "tributeReturn"].includes(room.status) && alive.length <= 1) {
+    const final = finishOrder.slice();
+
+    if (alive[0]) {
+      final.push({
+        uid: alive[0].uid,
+        nickname: alive[0].nickname,
+        rank: final.length + 1,
+        finishedAt: ts()
+      });
+    }
+
+    Object.assign(update, finishRoundUpdate({ ...room, tribute }, players, final));
+    update.chatPreview = chatPreview;
+  }
+
+  const batch = db.batch();
+
+  batch.set(roomRef(), update, { merge: true });
+  batch.delete(handRef(uid));
+
+  await batch.commit();
+}
 
 async function closeRoomIfNoHuman(roomId = S.roomId, players = playersMap(), specs = spectatorsMap()) {
   if (!roomId) return false;
