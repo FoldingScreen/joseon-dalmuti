@@ -3249,7 +3249,17 @@ async function joinRoom(roomId) {
   const specs = spectatorsMap(room);
   const kicked = kickedMap(room);
 
-  const alreadyInRoom = !!players[S.user] || !!specs[S.user];
+  const wasKicked = !!kicked[S.user];
+
+  // 강퇴자는 재입장 가능하게 하되,
+  // 기존 players/spectators 찌꺼기는 모두 제거하고 새로 입장시킴
+  if (wasKicked) {
+    delete kicked[S.user];
+    delete players[S.user];
+    delete specs[S.user];
+  }
+
+  const alreadyInRoom = !wasKicked && (!!players[S.user] || !!specs[S.user]);
 
   if (!alreadyInRoom && room.hasPassword) {
     const input = window.prompt("방 비밀번호를 입력하세요.");
@@ -3259,6 +3269,42 @@ async function joinRoom(roomId) {
       return;
     }
   }
+
+  if (!alreadyInRoom) {
+    if (room.status === "waiting" && countMap(players) < MAX_PLAYERS) {
+      players[S.user] = basePlayer(S.user, S.user, countMap(players), false);
+
+      await roomRef(roomId).set({
+        players,
+        spectators: specs,
+        kicked,
+        playerCount: countMap(players),
+        spectatorCount: countMap(specs),
+        updatedAt: serverNow()
+      }, { merge: true });
+
+      await handRef(S.user, roomId).set({ hand: [] }, { merge: true });
+    } else {
+      specs[S.user] = baseSpectator(S.user, S.user);
+
+      await roomRef(roomId).set({
+        players,
+        spectators: specs,
+        kicked,
+        playerCount: countMap(players),
+        spectatorCount: countMap(specs),
+        updatedAt: serverNow()
+      }, { merge: true });
+    }
+  } else if (wasKicked || room.kicked?.[S.user]) {
+    await roomRef(roomId).set({
+      kicked,
+      updatedAt: serverNow()
+    }, { merge: true });
+  }
+
+  enterRoom(roomId);
+}
 
   // 강퇴 기록은 재입장 차단용으로 쓰지 않음
   if (kicked[S.user]) delete kicked[S.user];
