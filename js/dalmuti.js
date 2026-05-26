@@ -374,7 +374,8 @@ function installMainSfx() {
     if (text.includes("게임 시작") || text.includes("다음 라운드")) return "start";
     if (text.includes("선택 카드") || text.includes("반환 카드")) return "play";
     if (text.includes("패스")) return "pass";
-    if (text.includes("강퇴") || text.includes("방 나가기") || text.includes("방 삭제") || text.includes("게임 중지")) return "kick";
+    if (text.includes("강퇴") || text.includes("방 삭제") || text.includes("게임 중지")) return "kick";
+    if (text.includes("방 나가기") || text.includes("문서 닫기")) return "click";
     if (text.includes("관전") || text.includes("참가")) return "ready";
     return "click";
   }
@@ -3387,7 +3388,9 @@ if (kicked[S.user]) {
 }
 
 if (!players[S.user] && !specs[S.user]) {
-  handleKicked();
+  // 강퇴가 아니라면, 내가 직접 나갔거나 방 데이터에서 빠진 상태임
+  // 이 경우 강퇴 알림 없이 로비로 복귀
+  leaveLocal();
   return;
 }
 
@@ -3524,8 +3527,15 @@ async function leaveRoom() {
       delete specs[S.user];
     }
 
-    // 내가 마지막 사람이라면 방을 closed가 아니라 완전히 삭제
-    if (!hasHumanInRoom(players, specs)) {
+// 내가 마지막 사람이라면 방을 완전히 삭제
+if (!hasHumanInRoom(players, specs)) {
+  leaveSubscriptions();
+
+  await closeRoomIfNoHuman(roomId, players, specs).catch(console.error);
+
+  leaveLocal();
+  return;
+}
       leaveSubscriptions();
 
       await clearSubcollection(ref.collection("hands")).catch(() => null);
@@ -4672,19 +4682,26 @@ async function closeRoomIfNoHuman(roomId = S.roomId, players = playersMap(), spe
 
   await clearSubcollection(ref.collection("hands")).catch(() => null);
 
-  await ref.set({
-    closed: true,
-    status: "closed",
-    players: {},
-    spectators: {},
-    playerCount: 0,
-    spectatorCount: 0,
-    currentTurnUid: null,
-    currentSet: null,
-    previousSet: null,
-    tribute: null,
-    updatedAt: serverNow()
-  }, { merge: true });
+  try {
+    await ref.delete();
+  } catch (err) {
+    console.error("[dalmuti] empty room delete failed, fallback to closed", err);
+
+    await ref.set({
+      closed: true,
+      status: "closed",
+      players: {},
+      spectators: {},
+      playerCount: 0,
+      spectatorCount: 0,
+      currentTurnUid: null,
+      currentSet: null,
+      previousSet: null,
+      tribute: null,
+      finishOrder: [],
+      updatedAt: serverNow()
+    }, { merge: true });
+  }
 
   return true;
 }
