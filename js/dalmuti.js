@@ -3536,37 +3536,14 @@ if (!hasHumanInRoom(players, specs)) {
   leaveLocal();
   return;
 }
-      leaveSubscriptions();
 
-      await clearSubcollection(ref.collection("hands")).catch(() => null);
-      await ref.delete().catch(async () => {
-        await ref.set({
-          closed: true,
-          status: "closed",
-          players: {},
-          spectators: {},
-          playerCount: 0,
-          spectatorCount: 0,
-          currentTurnUid: null,
-          currentSet: null,
-          previousSet: null,
-          tribute: null,
-          finishOrder: [],
-          updatedAt: serverNow()
-        }, { merge: true });
-      });
-
-      leaveLocal();
-      return;
-    }
-
-    const update = {
-      players,
-      spectators: specs,
-      playerCount: countMap(players),
-      spectatorCount: countMap(specs),
-      updatedAt: serverNow()
-    };
+const update = {
+  players,
+  spectators: specs,
+  playerCount: countMap(players),
+  spectatorCount: countMap(specs),
+  updatedAt: serverNow()
+};
 
     // 방장이 나가면 남은 사람에게 방장 위임
     if (room.hostUid === S.user) {
