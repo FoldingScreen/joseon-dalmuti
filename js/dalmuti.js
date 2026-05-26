@@ -1583,16 +1583,9 @@ function dismissNotice(key) {
     ["lobbyView", "roomView", "myNickname", "roomTitleInput", "roomPasswordInput", "totalRoundsSelect", "turnLimitSelect", "roomList", "rankPreview", "roomStateText", "roomTitle", "turnBadge", "messageBar", "lobbyControls", "readyBtn", "watchBtn", "joinAsPlayerBtn", "startBtn", "betweenControls", "nextRoundBtn", "resetGameBtn", "playersArea", "centerPile", "handArea", "selectedSummary", "playControls", "playBtn", "passBtn", "scoreList", "chatList", "chatInput", "sendChatBtn", "toggleSpectatorChatBtn", "homeBtn", "leaveRoomBtn", "createRoomBtn", "refreshRoomsBtn", "toast"].forEach(id => { E[id] = $(id); });
   }
 
-  function injectCss() {
-    if ($("dalmutiSingleCss")) return;
-
-    const link = document.createElement("link");
-    link.id = "dalmutiSingleCss";
-    link.rel = "stylesheet";
-    link.href = "./js/00-style.css?v=20260520-office-manage2";
-    
-    document.head.appendChild(link);
-  }
+function injectCss() {
+  // CSS는 dalmuti.css에 통합했으므로 별도 00-style.css를 로드하지 않음
+}
 
 function injectEnhancementCss() {
   if ($("dalmutiEnhancementCss")) return;
