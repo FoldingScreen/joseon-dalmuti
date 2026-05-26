@@ -1250,7 +1250,8 @@ const RANKS = [
     dismissedNoticeKeys: new Set(),
     actionBusy: false,
     hostAssigning: false,
-    leavingByKick: false
+    leavingByKick: false,
+    leavingByChoice: false
   };
 
   const E = {};
@@ -3428,21 +3429,35 @@ function bindNoticeModalDismiss() {
 }  
   
 function handleKicked() {
-    closeAllOverlays();
-    if (S.leavingByKick) return;
-    S.leavingByKick = true;
-    const roomId = S.roomId;
-    leaveSubscriptions();
-    S.room = null;
-    S.hand = [];
-    S.selected.clear();
-    localStorage.removeItem("dalmutiCurrentRoomId");
-    S.roomId = "";
-    setView("lobby");
-    loadRooms();
-    alert("방장에 의해 방에서 내보내졌습니다. 로비에서 다시 입장할 수 있습니다.");
-    setTimeout(() => { S.leavingByKick = false; }, 500);
+  closeAllOverlays();
+
+  // 사용자가 직접 나가기 처리 중이면 강퇴 알림을 띄우면 안 됨
+  if (S.leavingByChoice) {
+    leaveLocal();
+    return;
   }
+
+  if (S.leavingByKick) return;
+
+  S.leavingByKick = true;
+
+  leaveSubscriptions();
+
+  S.room = null;
+  S.hand = [];
+  S.selected.clear();
+  localStorage.removeItem("dalmutiCurrentRoomId");
+  S.roomId = "";
+
+  setView("lobby");
+  loadRooms();
+
+  alert("방장에 의해 방에서 내보내졌습니다. 로비에서 다시 입장할 수 있습니다.");
+
+  setTimeout(() => {
+    S.leavingByKick = false;
+  }, 500);
+}
 
   function ensureMyHandSubscription() {
     const mine = me();
@@ -3483,54 +3498,90 @@ function leaveLocal() {
 async function leaveRoom() {
   if (!S.roomId || !S.room) return leaveLocal();
 
-  if (S.room.status !== "waiting") {
-    toast("게임 중에는 화면에서만 나갑니다. 재참여는 제한될 수 있습니다.");
-    leaveLocal();
-    return;
-  }
+  const roomId = S.roomId;
+  const room = S.room;
+  const ref = roomRef(roomId);
 
-  const players = playersMap();
-  const specs = spectatorsMap();
+  S.leavingByChoice = true;
 
-  if (players[S.user]) {
-    delete players[S.user];
-    await handRef().delete().catch(() => null);
-  }
-
-  if (specs[S.user]) {
-    delete specs[S.user];
-  }
-
-  const update = {
-    players,
-    spectators: specs,
-    playerCount: countMap(players),
-    spectatorCount: countMap(specs),
-    updatedAt: serverNow()
-  };
-
-if (!hasHumanInRoom(players, specs)) {
-  await closeRoomIfNoHuman(S.roomId, players, specs);
-  leaveLocal();
-  return;
-}
-  
-  if (S.room.hostUid === S.user) {
-    const next =
-  Object.values(players).find(p => p && !p.isAI && !p.removedFromRoom) ||
-  Object.values(specs).find(p => p && !p.isAI && !p.removedFromRoom);
-
-    if (next) {
-      update.hostUid = next.uid;
-      update.hostNickname = next.nickname;
-    } else {
-      update.closed = true;
-      update.status = "closed";
+  try {
+    // 게임 중에는 기존 방 데이터는 건드리지 않고 화면에서만 나감
+    if (room.status !== "waiting") {
+      toast("게임 중에는 화면에서만 나갑니다. 재참여는 제한될 수 있습니다.");
+      leaveLocal();
+      return;
     }
-  }
 
-  await roomRef().update(update);
-  leaveLocal();
+    const players = playersMap(room);
+    const specs = spectatorsMap(room);
+
+    if (players[S.user]) {
+      delete players[S.user];
+      await handRef(S.user, roomId).delete().catch(() => null);
+    }
+
+    if (specs[S.user]) {
+      delete specs[S.user];
+    }
+
+    // 내가 마지막 사람이라면 방을 closed가 아니라 완전히 삭제
+    if (!hasHumanInRoom(players, specs)) {
+      leaveSubscriptions();
+
+      await clearSubcollection(ref.collection("hands")).catch(() => null);
+      await ref.delete().catch(async () => {
+        await ref.set({
+          closed: true,
+          status: "closed",
+          players: {},
+          spectators: {},
+          playerCount: 0,
+          spectatorCount: 0,
+          currentTurnUid: null,
+          currentSet: null,
+          previousSet: null,
+          tribute: null,
+          finishOrder: [],
+          updatedAt: serverNow()
+        }, { merge: true });
+      });
+
+      leaveLocal();
+      return;
+    }
+
+    const update = {
+      players,
+      spectators: specs,
+      playerCount: countMap(players),
+      spectatorCount: countMap(specs),
+      updatedAt: serverNow()
+    };
+
+    // 방장이 나가면 남은 사람에게 방장 위임
+    if (room.hostUid === S.user) {
+      const next =
+        Object.values(players).find(p => p && !p.isAI && !p.removedFromRoom) ||
+        Object.values(specs).find(p => p && !p.isAI && !p.removedFromRoom);
+
+      if (next) {
+        update.hostUid = next.uid;
+        update.hostNickname = next.nickname || next.uid;
+      }
+    }
+
+    // 중요: DB 업데이트 전에 구독을 끊어야
+    // 내가 제거된 스냅샷을 강퇴로 오판하지 않음
+    leaveSubscriptions();
+
+    await ref.set(update, { merge: true });
+
+    leaveLocal();
+  } finally {
+    setTimeout(() => {
+      S.leavingByChoice = false;
+    }, 500);
+  }
 }
 
 async function toggleReady() {
