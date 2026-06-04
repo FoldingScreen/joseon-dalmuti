@@ -1205,6 +1205,104 @@ async function repairInvalidTurn(room = S.room) {
 
   return true;
 }
+
+async function repairEmptyCurrentTurn(room = S.room) {
+  if (!room || !S.roomId || room.status !== "playing" || !room.currentTurnUid) {
+    return false;
+  }
+
+  const uid = room.currentTurnUid;
+  const players = playersMap(room);
+  const player = players[uid];
+
+  if (!player || player.finished || player.forfeited || player.removedFromRoom) {
+    return false;
+  }
+
+  const handSnap = await handRef(uid).get().catch(() => null);
+  const hand = handSnap?.exists ? sortHand(handSnap.data().hand || []) : [];
+
+  if (hand.length > 0) {
+    if (Number(player.cardCount || 0) !== hand.length) {
+      players[uid] = {
+        ...player,
+        cardCount: hand.length
+      };
+
+      await roomRef().set({
+        players,
+        updatedAt: serverNow()
+      }, { merge: true });
+
+      return true;
+    }
+
+    return false;
+  }
+
+  const finishOrder = (room.finishOrder || []).filter(item => item.uid !== uid);
+  const finishedRank = finishOrder.length + 1;
+
+  finishOrder.push({
+    uid,
+    nickname: player.nickname || uid,
+    rank: finishedRank,
+    finishedAt: ts()
+  });
+
+  players[uid] = {
+    ...player,
+    cardCount: 0,
+    finished: true,
+    finishedRank,
+    passed: false
+  };
+
+  const active = Object.values(players).filter(p =>
+    p && !p.finished && !p.forfeited && !p.removedFromRoom
+  );
+
+  if (active.length <= 1) {
+    const final = finishOrder.slice();
+
+    if (active[0]) {
+      final.push({
+        uid: active[0].uid,
+        nickname: active[0].nickname,
+        rank: final.length + 1,
+        finishedAt: ts()
+      });
+    }
+
+    await roomRef().set(
+      finishRoundUpdate(room, players, final),
+      { merge: true }
+    );
+
+    const isFinalRound = !!(room.totalRounds && room.round >= room.totalRounds);
+    const noticeKey = `roundEnd:${room.round}:${isFinalRound ? "final" : "normal"}`;
+
+    await addSystemOnce(
+      isFinalRound
+        ? "최종라운드가 종료되었습니다."
+        : `${room.round}라운드가 종료되었습니다.`,
+      noticeKey
+    );
+
+    return true;
+  }
+
+  const next = nextAfter({ ...room, players }, uid);
+
+  await roomRef().set({
+    players,
+    currentTurnUid: next,
+    finishOrder,
+    updatedAt: serverNow()
+  }, { merge: true });
+
+  return true;
+}
   
   function nextAfterKick(oldRoom, kickedUid, nextPlayers) {
     const oldList = allPlayers(oldRoom).filter(p => p && p.uid);
@@ -4134,8 +4232,11 @@ async function maybeClientTasks() {
   // AI/자동 조작은 방장 클라이언트가 대신 처리
   if (!isHost() || S.actionBusy) return;
 
-  const repaired = await repairInvalidTurn();
-  if (repaired) return;
+  const invalidRepaired = await repairInvalidTurn();
+  if (invalidRepaired) return;
+
+  const emptyRepaired = await repairEmptyCurrentTurn();
+  if (emptyRepaired) return;
 
   await maybeAutoHostStart();
   maybeAiAction();
@@ -4222,7 +4323,21 @@ if (!acquireAiLock(key, 5000)) return;
       const latestAi = playersMap(latest)[ai.uid];
       if (latest.status !== "playing" || latest.currentTurnUid !== ai.uid || !(latestAi?.isAI || latestAi?.autoPlay)) return;
       const hs = await handRef(ai.uid).get();
-      const hand = hs.exists ? (hs.data().hand || []) : [];
+      const hand = hs.exists ? sortHand(hs.data().hand || []) : [];
+
+      if (!hand.length) {
+        const old = S.room;
+        S.room = latest;
+
+        try {
+          await repairEmptyCurrentTurn(latest);
+        } finally {
+          S.room = old;
+        }
+
+        return;
+      }
+
       const cards = chooseAiCards(latest, hand);
       const old = S.room;
       S.room = latest;
