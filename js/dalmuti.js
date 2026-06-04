@@ -4052,6 +4052,12 @@ async function returnTribute(uid, cards, hand) {
       return normal.concat(extra);
     }
 
+    // 낼 수 있는 일반+조커 조합이 없으면 패스해야 함
+    // 단, 새 판인데 여기까지 온 경우는 멈추지 않도록 가장 약한 카드 1장을 냄
+    if (!room.currentSet && hand.length) {
+      return [hand[hand.length - 1]];
+    }
+
     return [];
   }
 
@@ -4165,7 +4171,17 @@ if (!acquireAiLock(key, 5000)) return;
       const cards = chooseAiCards(latest, hand);
       const old = S.room;
       S.room = latest;
-      try { if (cards.length) await applyPlay(ai.uid, cards, hand); else await passAs(ai.uid); } finally { S.room = old; }
+      try {
+        if (cards.length) {
+          await applyPlay(ai.uid, cards, hand);
+        } else if (latest.currentSet) {
+          await passAs(ai.uid);
+        } else if (hand.length) {
+          await applyPlay(ai.uid, [sortHand(hand).slice(-1)[0]], hand);
+        }
+      } finally {
+        S.room = old;
+      }
     }, AI_DELAY);
   }
 
