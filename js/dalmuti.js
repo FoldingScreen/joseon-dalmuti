@@ -1160,6 +1160,52 @@ function nextAfter(room, uid) {
   return null;
 }
 
+function firstAliveUid(room = S.room) {
+  const players = playersMap(room);
+
+  const order = Array.isArray(room?.turnOrder) && room.turnOrder.length
+    ? room.turnOrder.filter(id => players[id])
+    : allPlayers(room).map(p => p.uid);
+
+  return order.find(id => {
+    const p = players[id];
+    return p && !p.finished && !p.forfeited && !p.removedFromRoom;
+  }) || null;
+}
+
+async function repairInvalidTurn(room = S.room) {
+  if (!room || !S.roomId) return false;
+  if (!["playing", "tributeReturn"].includes(room.status)) return false;
+
+  const players = playersMap(room);
+  const cur = room.currentTurnUid ? players[room.currentTurnUid] : null;
+
+  const invalidTurn =
+    !cur ||
+    cur.finished ||
+    cur.forfeited ||
+    cur.removedFromRoom;
+
+  if (!invalidTurn) return false;
+
+  const next = firstAliveUid(room);
+
+  if (!next) {
+    await roomRef().set({
+      currentTurnUid: null,
+      updatedAt: serverNow()
+    }, { merge: true });
+    return true;
+  }
+
+  await roomRef().set({
+    currentTurnUid: next,
+    updatedAt: serverNow()
+  }, { merge: true });
+
+  return true;
+}
+  
   function nextAfterKick(oldRoom, kickedUid, nextPlayers) {
     const oldList = allPlayers(oldRoom).filter(p => p && p.uid);
     const idx = oldList.findIndex(p => p.uid === kickedUid);
@@ -4088,10 +4134,13 @@ async function maybeClientTasks() {
   // AI/자동 조작은 방장 클라이언트가 대신 처리
   if (!isHost() || S.actionBusy) return;
 
+  const repaired = await repairInvalidTurn();
+  if (repaired) return;
+
   await maybeAutoHostStart();
   maybeAiAction();
 }
-
+  
 async function maybeAutoHostStart() {
   const room = S.room;
   if (!room || !isHost(room)) return;
@@ -4156,6 +4205,12 @@ if (!acquireAiLock(key, 5000)) return;
     }
     if (room.status !== "playing" || !room.currentTurnUid) return;
     const ai = playersMap(room)[room.currentTurnUid];
+    
+    if (!ai || ai.finished || ai.forfeited || ai.removedFromRoom) {
+      repairInvalidTurn(room).catch(console.error);
+      return;
+    }
+    
     if (!(ai?.isAI || ai?.autoPlay) || ai.finished || ai.forfeited) return;
     const stamp = room.updatedAt ? `${room.updatedAt.seconds || 0}_${room.updatedAt.nanoseconds || 0}` : Date.now();
     const key = `${S.roomId}:ai:${room.round}:${ai.uid}:${room.currentSet?.uid || "new"}:${stamp}`;
