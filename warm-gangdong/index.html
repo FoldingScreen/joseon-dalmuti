@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>강동 온도계</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <section id="screenView" class="screen-view hidden">
+      <div class="hero-panel">
+        <div class="title-block">
+          <p class="eyebrow">강동구 나눔 협동게임</p>
+          <h1>사랑의 온도 올리기</h1>
+          <p class="subtitle">QR로 접속해서 모닥불에 부채질을 해주세요.</p>
+        </div>
+
+        <div class="temperature-wrap">
+          <div class="thermometer">
+            <div class="thermo-track">
+              <div id="thermoFill" class="thermo-fill"></div>
+              <div class="thermo-shine"></div>
+            </div>
+            <div class="thermo-bulb"></div>
+          </div>
+          <div class="temp-info">
+            <strong id="temperatureText">0%</strong>
+            <span id="totalFanText">전체 부채질 0회</span>
+          </div>
+        </div>
+
+        <div class="campfire-stage">
+          <div id="fire" class="fire">
+            <span class="flame flame-1"></span>
+            <span class="flame flame-2"></span>
+            <span class="flame flame-3"></span>
+            <span class="log log-1"></span>
+            <span class="log log-2"></span>
+          </div>
+          <div id="windLayer" class="wind-layer"></div>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="room-card">
+          <p>접속 코드</p>
+          <strong id="roomCodeText">----</strong>
+          <img id="qrImage" alt="참여 QR 코드" />
+        </div>
+
+        <div class="ranking-card">
+          <h2>실시간 랭킹</h2>
+          <ol id="rankingList" class="ranking-list"></ol>
+        </div>
+      </aside>
+
+      <div id="successOverlay" class="success-overlay hidden">
+        <div class="fireworks" aria-hidden="true"></div>
+        <div class="success-message">
+          <h2>🎉 성공!</h2>
+          <p>여러분의 나눔으로 강동구가 조금 더 따뜻해졌습니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="playerView" class="player-view hidden">
+      <div class="player-card">
+        <p class="eyebrow">강동구 나눔 협동게임</p>
+        <h1>모닥불 부채질</h1>
+        <p id="playerRoomText" class="player-room">접속 코드 확인 중</p>
+
+        <label class="nickname-label" for="nicknameInput">내 이름</label>
+        <input id="nicknameInput" class="nickname-input" maxlength="12" placeholder="닉네임 입력" />
+
+        <button id="fanButton" class="fan-button" type="button">
+          <span class="fan-emoji">🪭</span>
+          <span>부채질!</span>
+        </button>
+
+        <div class="my-score-box">
+          <span>내 부채질</span>
+          <strong id="myFanText">0회</strong>
+        </div>
+
+        <div class="mini-progress">
+          <div id="miniProgressFill"></div>
+        </div>
+        <p id="miniProgressText" class="mini-progress-text">현재 0%</p>
+      </div>
+    </section>
+  </div>
+
+  <script defer src="./firebase-config.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script defer src="./app.js"></script>
+</body>
+</html>
