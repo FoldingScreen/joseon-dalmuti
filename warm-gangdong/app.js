@@ -54,32 +54,31 @@
     return myId;
   }
 
-  function setProgress(total) {
-    const percent = Math.min(100, Math.floor(Number(total || 0) / TARGET_COUNT * 100));
+function setProgress(total) {
+  const percent = Math.min(100, Math.floor(Number(total || 0) / TARGET_COUNT * 100));
 
-    if ($("thermoFill")) $("thermoFill").style.height = percent + "%";
-    if ($("temperatureText")) $("temperatureText").textContent = percent + "%";
-    if ($("totalFanText")) $("totalFanText").textContent = `전체 부채질 ${Number(total || 0).toLocaleString()}회`;
-    if ($("miniProgressFill")) $("miniProgressFill").style.width = percent + "%";
-    if ($("miniProgressText")) $("miniProgressText").textContent = percent + "%";
-    if ($("fire")) $("fire").style.transform = `scale(${1 + percent / 80})`;
+  if ($("thermoFill")) $("thermoFill").style.height = percent + "%";
+  if ($("temperatureText")) $("temperatureText").textContent = percent + "%";
+  if ($("totalFanText")) $("totalFanText").textContent = `전체 부채질 ${Number(total || 0).toLocaleString()}회`;
+  if ($("miniProgressFill")) $("miniProgressFill").style.width = percent + "%";
+  if ($("miniProgressText")) $("miniProgressText").textContent = percent + "%";
+  if ($("fire")) $("fire").style.setProperty("--fire-scale", String(1 + percent / 120));
 
-    $("successOverlay")?.classList.toggle("hidden", percent < 100);
-  }
+  $("successOverlay")?.classList.toggle("hidden", percent < 100);
+}
 
-  function popWind() {
-    const layer = $("windLayer");
-    if (!layer) return;
+function popWind() {
+  const layer = $("windLayer");
+  if (!layer) return;
 
-    const el = document.createElement("span");
-    el.className = "wind";
-    el.textContent = "💨";
-    el.style.left = `${60 + Math.random() * 120}px`;
-    el.style.top = `${30 + Math.random() * 80}px`;
-    layer.appendChild(el);
+  const el = document.createElement("span");
+  el.className = "wind";
+  el.style.left = `${40 + Math.random() * 80}px`;
+  el.style.top = `${120 + Math.random() * 90}px`;
+  layer.appendChild(el);
 
-    setTimeout(() => el.remove(), 700);
-  }
+  setTimeout(() => el.remove(), 800);
+}
 
   function renderRanking(players) {
     const list = $("rankingList");
