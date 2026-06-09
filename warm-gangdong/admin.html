@@ -7,50 +7,84 @@
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body class="screen-page">
-  <main class="screen-layout">
-    <section class="main-stage">
-      <div class="top-title">
-        <div>
-          <p>강동구 나눔 협동게임</p>
-          <h1>사랑의 온도 올리기</h1>
-        </div>
-        <div class="admin-controls">
-          <button id="createRoomBtn">새 행사 시작</button>
-          <button id="resetRoomBtn">초기화</button>
-        </div>
+<main class="screen-layout">
+  <section class="main-stage">
+    <div class="stage-bg city-bg"></div>
+
+    <header class="stage-header">
+      <div>
+        <p class="kicker">강동구 나눔 협동게임</p>
+        <h1>사랑의 온도 올리기</h1>
+        <p class="sub-copy">함께 부채질할수록 강동의 온도가 올라갑니다.</p>
       </div>
 
-      <div class="temperature-zone">
-        <div class="thermometer">
-          <div class="thermo-track"><div id="thermoFill"></div></div>
-          <div class="thermo-bulb"></div>
-        </div>
-        <div class="temperature-info">
-          <span>현재 온도</span>
-          <strong id="temperatureText">0%</strong>
-          <p id="totalFanText">전체 부채질 0회</p>
-        </div>
+      <div class="admin-controls">
+        <button id="createRoomBtn" type="button">새 행사<br>시작</button>
+        <button id="resetRoomBtn" type="button">초기화</button>
       </div>
+    </header>
 
-      <div class="fire-wrap">
-        <div id="fire" class="fire">🔥</div>
-        <div id="windLayer"></div>
-      </div>
+    <div class="stage-center">
+      <section class="thermo-card">
+        <div class="thermo-label">LOVE TEMP</div>
+
+        <div class="thermo-wrap">
+          <div class="thermometer">
+            <div class="thermo-track">
+              <div id="thermoFill"></div>
+            </div>
+            <div class="thermo-bulb"></div>
+          </div>
+
+          <div class="temperature-info">
+            <span>현재 온도</span>
+            <strong id="temperatureText">0%</strong>
+            <p id="totalFanText">전체 부채질 0회</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bonfire-card">
+        <div class="fire-copy">
+          <span>따뜻한 마음을 모으는 중</span>
+          <strong>모닥불 부채질</strong>
+        </div>
+
+        <div class="fire-wrap">
+          <div id="fire" class="fire">
+            <span class="flame flame-back"></span>
+            <span class="flame flame-mid"></span>
+            <span class="flame flame-front"></span>
+            <span class="spark spark-1"></span>
+            <span class="spark spark-2"></span>
+            <span class="spark spark-3"></span>
+            <span class="log log-left"></span>
+            <span class="log log-right"></span>
+          </div>
+          <div id="windLayer"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="warm-message">
+      여러분의 나눔으로 강동구가 조금 더 따뜻해지고 있습니다.
+    </div>
+  </section>
+
+  <aside class="right-panel">
+    <section class="qr-card">
+      <p>참여 QR</p>
+      <strong id="roomCodeText">-----</strong>
+      <img id="qrImage" alt="QR" />
+      <span>휴대폰으로 스캔해 참여하세요</span>
     </section>
 
-    <aside class="right-panel">
-      <section class="qr-card">
-        <p>참여 QR</p>
-        <strong id="roomCodeText">-----</strong>
-        <img id="qrImage" alt="QR" />
-      </section>
-
-      <section class="ranking-card">
-        <h2>실시간 랭킹</h2>
-        <ol id="rankingList"></ol>
-      </section>
-    </aside>
-  </main>
+    <section class="ranking-card">
+      <h2>실시간 랭킹</h2>
+      <ol id="rankingList"></ol>
+    </section>
+  </aside>
+</main>
 
   <section id="successOverlay" class="success-overlay hidden">
     <div class="success-box">
