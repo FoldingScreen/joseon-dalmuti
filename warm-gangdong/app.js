@@ -15,8 +15,13 @@
   let roomId = "";
   let myId = localStorage.getItem(PLAYER_ID_KEY) || "";
   let myCount = 0;
-  let roomUnsub = null;
-  let playersUnsub = null;
+let roomUnsub = null;
+let playersUnsub = null;
+
+let successDismissed = false;
+let pendingFans = 0;
+let fanFlushTimer = null;
+let fanFlushing = false;
 
   function makeCode() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -64,7 +69,17 @@ function setProgress(total) {
   if ($("miniProgressText")) $("miniProgressText").textContent = percent + "%";
   if ($("fire")) $("fire").style.setProperty("--fire-scale", String(1 + percent / 120));
 
-  $("successOverlay")?.classList.toggle("hidden", percent < 100);
+  const overlay = $("successOverlay");
+
+  if (percent >= 100 && !successDismissed) {
+    overlay?.classList.remove("hidden");
+  } else {
+    overlay?.classList.add("hidden");
+  }
+
+  if (percent < 100) {
+    successDismissed = false;
+  }
 }
 
 function popWind() {
@@ -161,22 +176,79 @@ function popWind() {
     });
   }
 
-  async function saveMyName() {
-    const input = $("nicknameInput");
-    const nickname = String(input?.value || "").trim().slice(0, 12) || "참여자";
+function scheduleFanFlush() {
+  clearTimeout(fanFlushTimer);
+  fanFlushTimer = setTimeout(flushFans, 250);
+}
 
-    localStorage.setItem(PLAYER_NAME_KEY, nickname);
-    ensurePlayerId();
+async function flushFans() {
+  if (fanFlushing || pendingFans <= 0 || !roomId) return;
 
-    await playerRef().set({
-      nickname,
-      count: myCount,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+  fanFlushing = true;
 
-    return nickname;
+  const amount = pendingFans;
+  pendingFans = 0;
+
+  const input = $("nicknameInput");
+  const nickname = String(input?.value || "").trim().slice(0, 12) || "참여자";
+
+  localStorage.setItem(PLAYER_NAME_KEY, nickname);
+  ensurePlayerId();
+
+  try {
+    await db.runTransaction(async tx => {
+      const rRef = roomRef();
+      const pRef = playerRef();
+
+      const rSnap = await tx.get(rRef);
+      const pSnap = await tx.get(pRef);
+
+      const room = rSnap.data() || {};
+      const player = pSnap.exists ? (pSnap.data() || {}) : {};
+
+      const nextTotal = Number(room.totalCount || 0) + amount;
+      const nextMine = Number(player.count || 0) + amount;
+
+      tx.set(rRef, {
+        totalCount: nextTotal,
+        status: nextTotal >= TARGET_COUNT ? "success" : "playing",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      tx.set(pRef, {
+        nickname,
+        count: nextMine,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    });
+  } catch (err) {
+    console.error(err);
+    pendingFans += amount;
+    setTimeout(flushFans, 800);
+  } finally {
+    fanFlushing = false;
+
+    if (pendingFans > 0) {
+      scheduleFanFlush();
+    }
   }
+}
 
+async function fan() {
+  if (!roomId) return;
+
+  const input = $("nicknameInput");
+  const nickname = String(input?.value || "").trim().slice(0, 12) || "참여자";
+
+  myCount += 1;
+  pendingFans += 1;
+
+  if ($("myFanText")) $("myFanText").textContent = `${myCount.toLocaleString()}회`;
+  if ($("playerStatusText")) $("playerStatusText").textContent = `${nickname}님의 따뜻한 마음이 전달됐습니다.`;
+
+  popWind();
+  scheduleFanFlush();
+}
   async function fan() {
     if (!roomId) return;
 
@@ -262,6 +334,11 @@ function popWind() {
       db.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
     } catch (err) {}
 
+$("successOverlay")?.addEventListener("click", () => {
+  successDismissed = true;
+  $("successOverlay")?.classList.add("hidden");
+});
+    
     if (isAdminPage) initAdmin();
     if (isPlayerPage) initPlayer();
   }
