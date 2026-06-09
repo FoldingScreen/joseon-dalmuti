@@ -17,6 +17,7 @@
   let myCount = 0;
 let roomUnsub = null;
 let playersUnsub = null;
+let playerPollTimer = null;
 
 let successDismissed = false;
 let pendingFans = 0;
@@ -150,19 +151,25 @@ function popWind() {
     await batch.commit();
   }
 
-  function subscribeRoom(id) {
-    roomId = id;
+ function subscribeRoom(id) {
+  roomId = id;
 
-    if (roomUnsub) roomUnsub();
-    if (playersUnsub) playersUnsub();
+  if (roomUnsub) roomUnsub();
+  if (playersUnsub) playersUnsub();
+  if (playerPollTimer) clearInterval(playerPollTimer);
 
+  roomUnsub = null;
+  playersUnsub = null;
+  playerPollTimer = null;
+
+  // 행사장 화면만 실시간 구독
+  if (isAdminPage) {
     roomUnsub = roomRef(id).onSnapshot(snap => {
       if (!snap.exists) return;
 
       const data = snap.data() || {};
 
       if ($("roomCodeText")) $("roomCodeText").textContent = data.code || "-----";
-      if ($("playerRoomText")) $("playerRoomText").textContent = `접속 코드 ${data.code || "-----"}`;
 
       updateQr(id);
       setProgress(data.totalCount || 0);
@@ -174,11 +181,43 @@ function popWind() {
       snap.docs.forEach(doc => players[doc.id] = doc.data());
       renderRanking(players);
     });
+
+    return;
   }
+
+  // 참가자 화면은 실시간 구독하지 않고 3초마다 진행률만 확인
+  async function pollRoom() {
+    const snap = await roomRef(id).get().catch(() => null);
+    if (!snap?.exists) return;
+
+    const data = snap.data() || {};
+
+    if ($("playerRoomText")) $("playerRoomText").textContent = `접속 코드 ${data.code || "-----"}`;
+    setProgress(data.totalCount || 0);
+  }
+
+  pollRoom();
+  playerPollTimer = setInterval(pollRoom, 5000);
+}
+
+async function saveMyName() {
+  const input = $("nicknameInput");
+  const nickname = String(input?.value || "").trim().slice(0, 12) || "참여자";
+
+  localStorage.setItem(PLAYER_NAME_KEY, nickname);
+  ensurePlayerId();
+
+  await playerRef().set({
+    nickname,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+
+  return nickname;
+}
 
 function scheduleFanFlush() {
   clearTimeout(fanFlushTimer);
-  fanFlushTimer = setTimeout(flushFans, 250);
+  fanFlushTimer = setTimeout(flushFans, 5000);
 }
 
 async function flushFans() {
@@ -196,35 +235,24 @@ async function flushFans() {
   ensurePlayerId();
 
   try {
-    await db.runTransaction(async tx => {
-      const rRef = roomRef();
-      const pRef = playerRef();
+    const batch = db.batch();
 
-      const rSnap = await tx.get(rRef);
-      const pSnap = await tx.get(pRef);
+    batch.set(roomRef(), {
+      totalCount: firebase.firestore.FieldValue.increment(amount),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
 
-      const room = rSnap.data() || {};
-      const player = pSnap.exists ? (pSnap.data() || {}) : {};
+    batch.set(playerRef(), {
+      nickname,
+      count: firebase.firestore.FieldValue.increment(amount),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
 
-      const nextTotal = Number(room.totalCount || 0) + amount;
-      const nextMine = Number(player.count || 0) + amount;
-
-      tx.set(rRef, {
-        totalCount: nextTotal,
-        status: nextTotal >= TARGET_COUNT ? "success" : "playing",
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      tx.set(pRef, {
-        nickname,
-        count: nextMine,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-    });
+    await batch.commit();
   } catch (err) {
     console.error(err);
     pendingFans += amount;
-    setTimeout(flushFans, 800);
+    setTimeout(flushFans, 1500);
   } finally {
     fanFlushing = false;
 
@@ -234,7 +262,7 @@ async function flushFans() {
   }
 }
 
-async function fan() {
+function fan() {
   if (!roomId) return;
 
   const input = $("nicknameInput");
@@ -249,43 +277,6 @@ async function fan() {
   popWind();
   scheduleFanFlush();
 }
-  async function fan() {
-    if (!roomId) return;
-
-    const nickname = await saveMyName();
-    popWind();
-
-    await db.runTransaction(async tx => {
-      const rRef = roomRef();
-      const pRef = playerRef();
-
-      const rSnap = await tx.get(rRef);
-      const pSnap = await tx.get(pRef);
-
-      const room = rSnap.data() || {};
-      const player = pSnap.data() || {};
-
-      const nextTotal = Number(room.totalCount || 0) + 1;
-      const nextMine = Number(player.count || 0) + 1;
-
-      tx.set(rRef, {
-        totalCount: nextTotal,
-        status: nextTotal >= TARGET_COUNT ? "success" : "playing",
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      tx.set(pRef, {
-        nickname,
-        count: nextMine,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      myCount = nextMine;
-    });
-
-    if ($("myFanText")) $("myFanText").textContent = `${myCount.toLocaleString()}회`;
-    if ($("playerStatusText")) $("playerStatusText").textContent = `${nickname}님의 따뜻한 마음이 전달됐습니다.`;
-  }
 
   function initAdmin() {
     $("createRoomBtn")?.addEventListener("click", createRoom);
